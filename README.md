@@ -1,5 +1,5 @@
 reusable-charts
-========
+===============
 
 Plot data in cool Scalable Vector Graphcis plots (charts) using d3 with wrappers for common chart types (pie charts and line graphs).
 
