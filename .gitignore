@@ -1,0 +1,9 @@
+*.pyc
+*~
+*.bak
+*.swp
+*.swo
+.sass-cache
+._*
+.DS_Store
+
