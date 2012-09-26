@@ -49,7 +49,7 @@ DEVELOP
 INSTALL
 -------
 
-Just copy the javascript files into your web app path and include something like this in your HTML
+Just copy the javascript files into your web app path and include something like this in your HTML::
 
     <!-- D3 for plotting SVG graphics, charts, maps -->
     <script type="text/javascript" src="/static/js/d3.v2.js"></script>
@@ -81,8 +81,8 @@ Comply with Mike Bostoks "best practices" as they evolve, based on his blog at [
 References and Inspiration: 
 =====
 
- [1] http://www.tutorialspoint.com/javascript/array_map.htm
- [2] http://simonwillison.net/2004/may/26/addloadevent/ 
- [3] http://www.alistapart.com/articles/behavioralseparation
- [4] http://bost.ocks.org/mike/chart/
+1) http://www.tutorialspoint.com/javascript/array_map.htm
+2) http://simonwillison.net/2004/may/26/addloadevent/ 
+3) http://www.alistapart.com/articles/behavioralseparation
+4) http://bost.ocks.org/mike/chart/
 
