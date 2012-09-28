@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<head>
+    <meta charset=UTF-8>
+    <title> standard_charts ~ Scatter Chart </title>
+    <!-- <script src="http://localhost:8000/static/js/d3.v2.js"></script> -->
+    <!-- this works fine, but need local files to run on local apache/django-runserver instance -->
+    <!--  <script src="http://d3js.org/d3.v2.js"></script> -->
+    <!-- local version to allow apache/nginx/django-runserver instance to work without Internet connection but this doesn't seem to define d3-->
+    <script src="d3.v2.js"></script>
+    <!-- figure out a way to pull in latest code directly from github or from totalgood -->
+    <!-- <script src="http://github.com/hobsonlane/reusable-charts/blob/master/standard_charts.js"></script> -->
+    <script src="standard_charts.js"></script>
+    <style type=text/css>
+
+    @import url("styles.css");
+    /* TODO: implement syntax highlighting, like other d3 examples at github.com/mbostock/d3/Tutorials/ */
+    @import url("syntax.css"); 
+
+    </style>
+  </head>
+  <body>
+    <div class="body">
+      <div class="content">
+        <div class="topbar">
+          <a href="http://d3js.org/">D3.js Home Page</a>
+          <a href="https://github.com/hobsonlane/reusable-charts/">Github Repository</a>
+          <b><a href="https://github.com/hobsonlane/reusable-charts/wiki">Documentation</a></b>
+          <a href="https://github.com/hobsonlane/reusable-charts/">Source</a>
+        </div>
+        <div class="sidebar">
+          <h1>d3.js</h1>
+        </div>
+
+<h1 id="heading">standard_charts.js Examples</h1>
+
+<h2 id="heading-example-1">standard_charts.js Examples</h1>
+
+<p>A scatter plot needs a 2-D array of numbers like...</p>
+
+<pre>
+var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.8]];
+</pre>
+<script type="text/javascript">
+var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.8]];
+</script>
+
+<p>This is from the d3js.org bar-chart-1.html example, adjusted for 2-d data:</p>
+
+<style type="text/css">
+    .ex1 {
+      margin-left: 40px;
+      font: 10px sans-serif;
+      shape-rendering: crispEdges;
+    }
+    .ex1 div {
+      background-color: steelblue;
+      text-align: right;
+      padding: 3px; margin: 1px;
+      color: white;
+    }
+    .ex1 rect { stroke: white; fill: steelblue; }
+    /* .ex1 text.bar { fill: white;  } *}
+</style>
+
+<script type="text/javascript">
+    d3.select(".content").append("div")
+        .attr("class", "ex1")
+      .selectAll("div")
+        .data(data)
+      .enter().append("div")
+        .style("width", function(d) { return d[0] * 10 + "px"; })
+        .text(function(d) { return d; });
+</script>
+
+<p>Here's how reusable_charts.timeSeriesChart() would present this data out of the box
+
+<script type="text/javascript">
+
+    var chart = timeSeriesChart()
+        .x(function(d) { return +d[0]; })
+        .y(function(d) { return +d[1]; });
+
+
+  d3.select(".content").append("div")
+    .attr("class", "ex2")
+      .datum(data)
+      .call(chart);
+
+</script>
+
+<p>Here's how standard_charts.scatterChart() would present this data out of the box
+
+<pre>
+    var chart = scatterChart()
+        .x(function(d) { return +d[0]; })
+        .y(function(d) { return +d[1]; });
+
+    d3.select(".content").append("div")
+        .attr("class", "ex3")
+        .datum(data)
+        .call(chart);
+</pre>
+<script>
+    var chart = scatterChart()
+        .x(function(d) { return +d[0]; })
+        .y(function(d) { return +d[1]; });
+
+    d3.select(".content").append("div")
+        .attr("class", "ex3")
+        .datum(data)
+        .call(chart);
+</script>
+
+<p>Here's how standard_charts.timeSeriesChart() plots 2-D data in an SVG and attaches it to an existing tag
+
+<pre>
+    var c = timeSeriesChart();
+    var dv = d3.select("#existing_tag_id").datum(data).call(c);
+</pre>
+<p id="existing_tag_id">
+
+<style>
+
+#example {
+  margin-left: 20px;
+}
+.line {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+.area {
+  fill: #969696;
+}
+
+</style>
+
+<script>
+    var c = timeSeriesChart();
+    //.chart();
+    var dv = d3.select("#existing_tag_id").datum(data).call(c);
+</script>
+
+<p> If you have weird data, like a list of objects or anything besides the expected list of 2-length lists of numbers, you need to call .x() and .y() and give it a data "parsing" function:
+
+<pre>
+    var dtdata = [{"date":"Jan 2011","price":"1"},
+                  {"date":"Feb 2011","price":"3"},
+                  {"date":"Mar 2011","price":"2.5"}];
+    var formatDate = d3.time.format("%b %Y");
+    var c2 = timeSeriesChart()
+            .x(function(d) { return formatDate.parse(d.date); })
+            .y( function(d) {return +d.price; });
+    var dv2 = d3.select("#existing_tag_id2").datum(dtdata).call(c2);
+</pre>
+
+<p id="existing_tag_id2">
+
+<script>
+    var dtdata = [{"date":"Jan 2011","price":"1"},
+                  {"date":"Feb 2011","price":"3"},
+                  {"date":"Mar 2011","price":"2.5"}];
+    var formatDate = d3.time.format("%b %Y");
+    var c2 = timeSeriesChart()
+            .x(function(d) { return formatDate.parse(d.date); })
+            .y( function(d) {return +d.price; });
+    var dv2 = d3.select("#existing_tag_id2").datum(dtdata).call(c2);
+</script>
+
+</body>

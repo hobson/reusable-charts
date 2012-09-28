@@ -200,6 +200,238 @@ function timeSeriesChart() {
     });
   }
 
+  // The x-accessor for the path generator; xScale ∘ xValue.
+  function X(d) {
+    return xScale(d[0]);
+  }
+
+  // The x-accessor for the path generator; yScale ∘ yValue.
+  function Y(d) {
+    return yScale(d[1]);
+  }
+
+  chart.margin = function(_) {
+    if (!arguments.length) return margin;
+    margin = _;
+    return chart;
+  };
+
+  chart.width = function(_) {
+    if (!arguments.length) return width;
+    width = _;
+    return chart;
+  };
+
+  chart.height = function(_) {
+    if (!arguments.length) return height;
+    height = _;
+    return chart;
+  };
+
+  chart.x = function(_) {
+    if (!arguments.length) return xValue;
+    xValue = _;
+    return chart;
+  };
+
+  chart.y = function(_) {
+    if (!arguments.length) return yValue;
+    yValue = _;
+    return chart;
+  };
+
+  return chart;
+}
+
+function xValue(d) { return d[0]; }
+function yValue(d) { return d[1]; }
+function lineLinear(points) { return points.join("L"); }
+function d3_functor(v) {
+    return typeof v === "function" ? v : function() { return v; }; }
+// FIXME: equivalent to: d3_functor(true)
+function fun_true() { return true; }
+
+// identity projection is the default for a line
+function my_identity(d) {
+    return d;
+}
+
+myline = function() {
+    return my_line(my_identity);
+  };
+
+function my_line(projection) {
+    function line(data) {
+        function segment() {
+            segments.push("M", interpolate(projection(points), tension));
+          }
+          var segments = [], points = [], i = -1, n = data.length, d, fx = d3_functor(x), fy = d3_functor(y);
+          while (++i < n) {
+            if (defined.call(this, d = data[i], i)) {
+              points.push([ +fx.call(this, d, i), +fy.call(this, d, i) ]);
+            } else if (points.length) {
+              segment();
+              points = [];
+            }
+          }
+          if (points.length) segment();
+          return segments.length ? segments.join("") : null;
+        }
+    var x = xValue, y = yValue, defined = fun_true, interpolate = lineLinear, interpolateKey = interpolate.key, tension = .7;
+    line.x = function(_) {
+      if (!arguments.length) return x;
+      x = _;
+      return line;
+    };
+    line.y = function(_) {
+      if (!arguments.length) return y;
+      y = _;
+      return line;
+    };
+    line.defined = function(_) {
+      if (!arguments.length) return defined;
+      defined = _;
+      return line;
+    };
+    line.interpolate = function(_) {
+      if (!arguments.length) return interpolateKey;
+      if (typeof _ === "function") interpolateKey = interpolate = _; else interpolateKey = (interpolate = lineLinear).key;
+      return line;
+    };
+    line.tension = function(_) {
+      if (!arguments.length) return tension;
+      tension = _;
+      return line;
+    };
+    return line;
+    }
+
+function my_marker(projection) {
+    function marker(data) {
+        function segment() {
+            segments.push("M", interpolate(projection(points), tension));
+          }
+          var segments = [], points = [], i = -1, n = data.length, d, fx = d3_functor(x), fy = d3_functor(y);
+          while (++i < n) {
+            if (defined.call(this, d = data[i], i)) {
+              points.push([ +fx.call(this, d, i), +fy.call(this, d, i) ]);
+            } else if (points.length) {
+              segment();
+              points = [];
+            }
+          }
+          if (points.length) segment();
+          return segments.length ? segments.join("") : null;
+        }
+    var x = xValue, y = yValue, defined = fun_true, interpolate = lineLinear, interpolateKey = interpolate.key, tension = .7;
+    marker.x = function(_) {
+      if (!arguments.length) return x;
+      x = _;
+      return marker;
+    };
+    marker.y = function(_) {
+      if (!arguments.length) return y;
+      y = _;
+      return marker;
+    };
+    marker.defined = function(_) {
+      if (!arguments.length) return defined;
+      defined = _;
+      return marker;
+    };
+    marker.interpolate = function(_) {
+      if (!arguments.length) return interpolateKey;
+      if (typeof _ === "function") interpolateKey = interpolate = _; else interpolateKey = (interpolate = lineLinear).key;
+      return marker;
+    };
+    marker.tension = function(_) {
+      if (!arguments.length) return tension;
+      tension = _;
+      return marker;
+    };
+    return marker;
+    }
+
+
+/* based on timeSeriesChart at http://bost.ocks.org/mike/chart/time-series-chart.js */
+function scatterChart() {
+  var margin = {top: 20, right: 20, bottom: 20, left: 20},
+      width  = 760,
+      height = 240,
+      r      = Math.min(width,height)/30,
+      xValue = function(d) { return d[0]; },// TODO: assign to global xValue function
+      yValue = function(d) { return d[1]; }, // TODO: assign to global yValue function
+      xScale = d3.scale.linear(),
+      yScale = d3.scale.linear(),
+      xAxis  = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
+      yAxis  = d3.svg.axis().scale(yScale).orient("left"  ).tickSize(6, 0),
+      area   = null, //d3.svg.area().x(X).y1(Y), // why y1 instead of y? area and line must be allowed to have different y values
+      marker = "circle",
+      line = myline().x(X).y(Y);
+
+  function chart(selection) {
+    selection.each(function(data) {
+
+      // Convert data to standard representation greedily;
+      // this is needed for nondeterministic accessors.
+      data = data.map(function(d, i) {
+        return [xValue.call(data, d, i), yValue.call(data, d, i)];
+      });
+
+      // Update the x-scale.
+      xScale
+          .domain(d3.extent(data, function(d) { return d[0]; }))
+          .range([0, width - margin.left - margin.right]);
+
+      // Update the y-scale.
+      yScale
+          .domain([0, d3.max(data, function(d) { return d[1]; })])
+          .range([height - margin.top - margin.bottom, 0]);
+
+      // Select the svg element, if it exists.
+      var svg = d3.select(this).selectAll("svg").data([data]);
+
+      // Otherwise, create the skeletal chart.
+      var gEnter = svg.enter().append("svg").append("g");
+      gEnter.append("path").attr("class", "area");
+      gEnter.append("path").attr("class", "line").style("fill","white").style("stroke","gray");
+      gEnter.append("circle").attr("class","marker").style("stroke", "gray").style("fill", "#6773c7");
+      gEnter.append("g").attr("class", "x axis");
+
+      // Update the outer dimensions.
+      svg .attr("width", width)
+          .attr("height", height);
+
+      // Update the inner dimensions.
+      var g = svg.select("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Update the area path.
+//      g.select(".area")
+//          .attr("d", area ? area.y0(yScale.range()[0]): "");
+
+      // Update the line path.
+      g.select(".line")
+          .attr("d", line);
+
+      // Update the markers.
+      g.select(".marker")
+          .attr("r", r)
+          .attr("cx", xValue)
+          .attr("cy", yValue);
+
+      // Update the x-axis.
+      g.select(".x.axis")
+          .attr("transform", "translate(0," + yScale.range()[0] + ")")
+          .call(xAxis);
+
+      // Update the y-axis.
+      g.select(".y.axis")
+          .attr("transform", "translate(0," + xScale.range()[0] + ")")
+          .call(yAxis);
+    });
+  }
+
   // The x-accessor for the path generator; xScale âˆ˜ xValue.
   function X(d) {
     return xScale(d[0]);
