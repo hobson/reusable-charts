@@ -367,7 +367,7 @@ function scatterChart() {
       yAxis  = d3.svg.axis().scale(yScale).orient("left"  ).tickSize(6, 0),
       area   = null, //d3.svg.area().x(X).y1(Y), // why y1 instead of y? area and line must be allowed to have different y values
       marker = "circle",
-      line = myline().x(X).y(Y);
+      line = d3.svg.symbol; //.cx(X).cy(Y);
 
   function chart(selection) {
     selection.each(function(data) {
@@ -394,8 +394,9 @@ function scatterChart() {
       // Otherwise, create the skeletal chart.
       var gEnter = svg.enter().append("svg").append("g");
       gEnter.append("path").attr("class", "area");
-      gEnter.append("path").attr("class", "line").style("fill","white").style("stroke","gray");
-      gEnter.append("circle").attr("class","marker").style("stroke", "gray").style("fill", "#6773c7");
+      gEnter.append("path").attr("class", "marker").style("fill","white").style("stroke","gray").attr("transform", function(d) { return "translate(" + X + "," + Y + ")"; }).attr("d", d3.svg.symbol());
+      //
+      //gEnter.append("circle").attr("class","marker").style("stroke", "gray").style("fill", "#6773c7");
       gEnter.append("g").attr("class", "x axis");
 
       // Update the outer dimensions.
@@ -416,9 +417,10 @@ function scatterChart() {
 
       // Update the markers.
       g.select(".marker")
-          .attr("r", r)
-          .attr("cx", xValue)
-          .attr("cy", yValue);
+          .attr("class", "marker").style("fill","white").style("stroke","gray").attr("transform", "translate(" + X + "," + Y + ")"; }).attr("d", d3.svg.symbol());
+//          .attr("r", r)
+//          .attr("cx", X) // X = xScale(d[0])
+//          .attr("cy", Y); // Y = yScale(d[1])
 
       // Update the x-axis.
       g.select(".x.axis")
@@ -433,14 +435,10 @@ function scatterChart() {
   }
 
   // The x-accessor for the path generator; xScale âˆ˜ xValue.
-  function X(d) {
-    return xScale(d[0]);
-  }
+  function X(d) { return xScale(d[0]); }
 
   // The x-accessor for the path generator; yScale âˆ˜ yValue.
-  function Y(d) {
-    return yScale(d[1]);
-  }
+  function Y(d) { return yScale(d[1]); }
 
   chart.margin = function(_) {
     if (!arguments.length) return margin;
