@@ -643,32 +643,32 @@ function json_or_object(data,default_value) {
 /* from http://mbostock.github.com/d3/ex/pack.html */
 function add_packed_bubbles(divid,data_arg,width_arg,height_arg){
     // chart configuration variables
-    var margin = {top: 20, right: 20, bottom: 20, left: 20},
-        width  = 960,
+    var width  = 960,
         height = 720,
-        xScale = d3.scale.linear(),
-        yScale = d3.scale.linear(),
-        xAxis  = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
-        yAxis  = d3.svg.axis().scale(yScale).orient("left"  ).tickSize(6, 0),
+        // margin = {top: 20, right: 20, bottom: 20, left: 20}, 
+        // xScale = d3.scale.linear(),
+        // yScale = d3.scale.linear(),
+        // xAxis  = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
+        // yAxis  = d3.svg.axis().scale(yScale).orient("left"  ).tickSize(6, 0),
         data = { "name": "Root Name", "children": [
                  { "name": "Child 1", "children": [ 
                     { "name": "1.1 GC", "children": [
                       {"name": "GGchild 1.1.1", "size": 111 },
-                      {"name": "GGchild 1.1.2", "size": 112 },
-                      {"name": "GGchild 1.1.3", "size": 113 },
-                      {"name": "GGchild 1.1.4", "size": 114 } ] },
+                      {"name": "GGchild 1.1.2", "size": 211 },
+                      {"name": "GGchild 1.1.3", "size": 311 },
+                      {"name": "GGchild 1.1.4", "size": 411 } ] },
                     { "name": "Grandchild 2.1", "children": [
-                      {"name": "GGchild 1.2.1", "size": 211 },
-                      {"name": "GGchild 1.2.2", "size": 212 },
-                      {"name": "GGchild 1.2.3", "size": 213 } ] },
+                      {"name": "GGchild 1.2.1", "size": 121 },
+                      {"name": "GGchild 1.2.2", "size": 221 },
+                      {"name": "GGchild 1.2.3", "size": 321 } ] },
                     { "name": "Grandchild 3.1", "children": [
-                      {"name": "GGchild 1.3.1", "size": 311 },
-                      {"name": "GGchild 1.3.2", "size": 312 } ] } ] },
+                      {"name": "GGchild 1.3.1", "size": 131 },
+                      {"name": "GGchild 1.3.2", "size": 231 } ] } ] },
                  { "name": "Child 2", "children": [ 
                     { "name": "Grandchild 1.1", "children": [
-                      {"name": "GGchild 2.1.1", "size": 111 },
-                      {"name": "GGchild 2.1.2", "size": 112 },
-                      {"name": "GGchild 2.1.3", "size": 113 } ] } ] } ] };
+                      {"name": "GGchild 2.1.1", "size": 112 },
+                      {"name": "GGchild 2.1.2", "size": 212 },
+                      {"name": "GGchild 2.1.3", "size": 312 } ] } ] } ] };
 
     // process positional arguments, assigning defaults as necessary
     divid  = munge_selector(divid,     "#chart");
