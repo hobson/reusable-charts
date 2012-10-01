@@ -200,12 +200,12 @@ function timeSeriesChart() {
     });
   }
 
-  // The x-accessor for the path generator; xScale ∘ xValue.
+  // The x-accessor for the path generator; xScale dot xValue.
   function X(d) {
     return xScale(d[0]);
   }
 
-  // The x-accessor for the path generator; yScale ∘ yValue.
+  // The x-accessor for the path generator; yScale dot yValue.
   function Y(d) {
     return yScale(d[1]);
   }
@@ -250,61 +250,9 @@ function d3_functor(v) {
     return typeof v === "function" ? v : function() { return v; }; }
 // FIXME: equivalent to: d3_functor(true)
 function fun_true() { return true; }
-
-// identity projection is the default for a line
-function my_identity(d) {
-    return d;
-}
-
-myline = function() {
-    return my_line(my_identity);
-  };
-
-function my_line(projection) {
-    function line(data) {
-        function segment() {
-            segments.push("M", interpolate(projection(points), tension));
-          }
-          var segments = [], points = [], i = -1, n = data.length, d, fx = d3_functor(x), fy = d3_functor(y);
-          while (++i < n) {
-            if (defined.call(this, d = data[i], i)) {
-              points.push([ +fx.call(this, d, i), +fy.call(this, d, i) ]);
-            } else if (points.length) {
-              segment();
-              points = [];
-            }
-          }
-          if (points.length) segment();
-          return segments.length ? segments.join("") : null;
-        }
-    var x = xValue, y = yValue, defined = fun_true, interpolate = lineLinear, interpolateKey = interpolate.key, tension = .7;
-    line.x = function(_) {
-      if (!arguments.length) return x;
-      x = _;
-      return line;
-    };
-    line.y = function(_) {
-      if (!arguments.length) return y;
-      y = _;
-      return line;
-    };
-    line.defined = function(_) {
-      if (!arguments.length) return defined;
-      defined = _;
-      return line;
-    };
-    line.interpolate = function(_) {
-      if (!arguments.length) return interpolateKey;
-      if (typeof _ === "function") interpolateKey = interpolate = _; else interpolateKey = (interpolate = lineLinear).key;
-      return line;
-    };
-    line.tension = function(_) {
-      if (!arguments.length) return tension;
-      tension = _;
-      return line;
-    };
-    return line;
-    }
+// identity projection is the default for mymarker
+function my_identity(d) { return d; }
+mymarker = function() { return my_marker(my_identity); };
 
 function my_marker(projection) {
     function marker(data) {
@@ -352,28 +300,26 @@ function my_marker(projection) {
     return marker;
     }
 
-
 /* based on timeSeriesChart at http://bost.ocks.org/mike/chart/time-series-chart.js */
 function scatterChart() {
   var margin = {top: 20, right: 20, bottom: 20, left: 20},
       width  = 760,
       height = 240,
       r      = Math.min(width,height)/30,
-      xValue = function(d) { return d[0]; },// TODO: assign to global xValue function
-      yValue = function(d) { return d[1]; }, // TODO: assign to global yValue function
       xScale = d3.scale.linear(),
       yScale = d3.scale.linear(),
       xAxis  = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
       yAxis  = d3.svg.axis().scale(yScale).orient("left"  ).tickSize(6, 0),
       area   = null, //d3.svg.area().x(X).y1(Y), // why y1 instead of y? area and line must be allowed to have different y values
       marker = "circle",
-      line = d3.svg.symbol; //.cx(X).cy(Y);
+      line = my_marker(my_identity).x(X).y(Y),
+      tmp = 0;
 
   function chart(selection) {
-    selection.each(function(data) {
 
-      // Convert data to standard representation greedily;
-      // this is needed for nondeterministic accessors.
+    selection.each(function(data) {    // for each data point
+
+      // Convert data to standard representation 
       data = data.map(function(d, i) {
         return [xValue.call(data, d, i), yValue.call(data, d, i)];
       });
@@ -389,19 +335,29 @@ function scatterChart() {
           .range([height - margin.top - margin.bottom, 0]);
 
       // Select the svg element, if it exists.
-      var svg = d3.select(this).selectAll("svg").data([data]);
+      var svg = d3.select(this).selectAll("svg").data([data]); // assigns all the data at once?
 
       // Otherwise, create the skeletal chart.
-      var gEnter = svg.enter().append("svg").append("g");
+      // WTF: can't be split into multiple lines, chain must be on one line!
+      var gEnter = svg.enter().append("svg").append("g"); 
+// WTF: this doesn't work:
+//      var gEnter = svg.enter().append("svg");
+//      gEnter.append("g"); 
+
       gEnter.append("path").attr("class", "area");
-      gEnter.append("path").attr("class", "marker").style("fill","white").style("stroke","gray").attr("transform", function(d) { return "translate(" + X + "," + Y + ")"; }).attr("d", d3.svg.symbol());
-      //
-      //gEnter.append("circle").attr("class","marker").style("stroke", "gray").style("fill", "#6773c7");
+      gEnter.append("path").attr("class", "line").style("fill","white").style("stroke","gray");
       gEnter.append("g").attr("class", "x axis");
 
+      gEnter.append("circle").attr("class","marker").style("stroke", "gray").style("fill", "#6773c7");
+      // Update the markers.
+      var mrksel = gEnter.select(".marker");
+//          .attr("r", 10 )
+//          .attr("cx", function(d,i) { return data[i][0]; } )
+//          .attr("cy", function(d,i) { return data[i][1]; } );
+
       // Update the outer dimensions.
-      svg .attr("width", width)
-          .attr("height", height);
+      svg.attr("width",  width)
+         .attr("height", height);
 
       // Update the inner dimensions.
       var g = svg.select("g")
@@ -415,12 +371,6 @@ function scatterChart() {
       g.select(".line")
           .attr("d", line);
 
-      // Update the markers.
-      g.select(".marker")
-          .attr("class", "marker").style("fill","white").style("stroke","gray").attr("transform", "translate(" + X + "," + Y + ")"; }).attr("d", d3.svg.symbol());
-//          .attr("r", r)
-//          .attr("cx", X) // X = xScale(d[0])
-//          .attr("cy", Y); // Y = yScale(d[1])
 
       // Update the x-axis.
       g.select(".x.axis")
@@ -435,10 +385,14 @@ function scatterChart() {
   }
 
   // The x-accessor for the path generator; xScale âˆ˜ xValue.
-  function X(d) { return xScale(d[0]); }
+  function X(d) {
+    return xScale(d[0]);
+  }
 
   // The x-accessor for the path generator; yScale âˆ˜ yValue.
-  function Y(d) { return yScale(d[1]); }
+  function Y(d) {
+    return yScale(d[1]);
+  }
 
   chart.margin = function(_) {
     if (!arguments.length) return margin;
@@ -473,8 +427,129 @@ function scatterChart() {
   return chart;
 } // function timeSeriesChart
 
+
+function get_columns(x,y) {
+    if (typeof(x) === "undefined") { var x=[]; }
+    if (typeof(y) === "undefined") { 
+        var y=[];
+        if ( x[0] && x[0].length === 2 ) // if x is a list of pairs 
+            for (var yi in x) y.push(yi);
+        else if ( x.length === 2 )  // if x is a pair of lists
+            for (var yi in x[1]) y.push(yi); 
+        else for (var yi in x) y.push(0);
+        } // if y undefined
+    return [x,y]; }
+
+function munge_selector(divid,defaultid) {
+    if (!divid.length || divid[0] != "#") 
+        divid = "#"+divid;
+    divid = divid.length > 1 ? divid : defaultid;
+    return divid
+    }
+
+// set a default value for a numerical function argument if it isn't supplied (or undefined)
+// FIXME: check that the arg and the default are strings and coerce
+function default_number(arg,default_value) {
+    if (typeof(arg) === "undefined")
+        if (typeof(default_value) != "undefined") arg = +default_value;
+        else arg = 0;
+    return +arg; }
+
+// set a default value for a string function argument if it isn't supplied (or undefined)
+// FIXME: check that the arg and the default are strings and coerce
+function default_string(arg,default_value) {
+    if (typeof(arg) === "undefined")
+        if (typeof(default_value) != "undefined") arg = ""+default_value;
+        else arg = "";
+    return ""+arg; }
+
+function draw_circle(canvas,r,cx,cy,stroke,fill) {
+    canvas.append("circle")
+        .style("stroke", stroke)
+        .style("fill", fill)
+        .attr("r", r)
+        .attr("cx", cx)
+        .attr("cy", cy);
+    return canvas;
+    }
+
+function draw_diamond(canvas,r,cx,cy,stroke,fill) {
+    canvas.append("path")
+        .attr("d", "M"+(cx+r)+","+(cy+0)+"L"+(cx+0)+","+(cy+r)+"L"+(cx-r)+","+(cy+0)+"L"+(cx+0)+","+(cy-r)+"Z")
+        .style("stroke", stroke)
+        .style("fill", fill); // M=move,L=line,Z=close_up_shape
+    return canvas;
+    }
+
+function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
+    divid =munge_selector(divid,"#map");
+    marker=default_string(marker,"diamond");
+    stroke=default_string(stroke,"#447");
+    fill  =default_string(fill,"#6773b7");
+    r     =default_number(r,5);
+    height=default_number(height,610);
+    width =default_number(width,920); 
+    
+    if (marker[0] === "d" || marker[0] === "D" ) markfun=draw_diamond;
+    else markfun = draw_circle;
+
+    xy = get_columns(x,y); x=xy[0]; y=xy[1];
+
+    var N=Math.min(x.length,y.length)
+    var minX=Math.min.apply( null, x ); 
+    var maxX=Math.max.apply( null, x );
+    var minY=Math.min.apply( null, y );
+    var maxY=Math.max.apply( null, y );
+    var Cx = (maxX+minX)*0.5 // map horizontal (east-west) center in degrees
+    var Cy = (maxY+minY)*0.5 // map horizontal (east-west) center in degrees
+    var Cx_rad = deg2rad(Cx);
+    var Cy_rad = deg2rad(Cy);
+    
+    // convert to linear distance in meters relative to center/origin, with down positive and right positive
+    for (i = 0; i < N; i++) { 
+        x[i] = deg2rad(x[i]-Cx)*radlon2m(Cy_rad);
+        y[i] = deg2rad(Cy-y[i])*radlat2m(Cy_rad);  // Cy unnecessary
+    }
+    // Distance calcs assume spherical earth, which means ~.1% inacuracy for all calcs
+    
+    var marginX = 40,  marginY = 30;  // size of clear margin around perimeter of map canvas
+
+    // data bounds in meters relative to center
+    var minX_m=Math.min.apply( null, x ); 
+    var maxX_m=Math.max.apply( null, x );
+    var minY_m=Math.min.apply( null, y );
+    var maxY_m=Math.max.apply( null, y ); 
+
+    var sfX =(width-2*marginX)/(maxX_m-minX_m);
+    var sfY =(height-2*marginY)/(maxY_m-minY_m); 
+    // maintain orthographic scale (don't stretch to fit canvas)
+    sfX = Math.min(sfX,sfY); sfY=sfX;
+    function Xscale(value,i,values) {
+        return (value-minX_m)*sfX; }
+    function Yscale(value,i,values) {
+        return (value-minY_m)*sfY; }
+    
+    // sfX = sfY = 0.0031899591573045817 // assumes square pixels
+    // minX_m = -134835.72265379986
+    // minY_m = -87775.41849049611
+    
+    x = x.map(Xscale)
+    y = y.map(Yscale) 
+
+    // create a canvas to draw an SVG drawing on
+    var canvas = d3.select(divid).append("svg")
+        .attr("width", width).attr("height", height);
+    
+    // add a large gray dot for each x,y coordinate computed
+    for (i = 0; i < N; i++) 
+        canvas = markfun(canvas,r,marginX+x[i],marginY+y[i],stroke,fill);
+    } // function add_geo_scatter
+
 // non-closured function
-function add_pie_chart(wedges,r,title,divid,css_class,highlight_color,x,y) { 
+function add_pie_chart(wedges,r,title,divid,css_class,highlight_color,x,y) {
+    divid = munge_selector(divid,"#piemap");
+    xy = get_columns(x,y); x=xy[0]; y=xy[1];
+    
     var N = wedges.length
     // mouseover highlight fill color
     if (typeof(highlight_color) === "undefined") {
@@ -555,3 +630,90 @@ function add_pie_chart(wedges,r,title,divid,css_class,highlight_color,x,y) {
         .attr("text-anchor", "middle") //center the text on it's origin
         .text(function(d, i) { return wedges[i].label; } ); //get the label from our original data array
     } // function chart()
+
+function json_or_object(data,default_value) {
+    var typ = typeof data;
+    if (typ === "object") return data;
+    if (typ != "string") return default_value;
+    if ((data.length>256) && (data[0]==='['))
+        return JSON.parse(data);
+    return d3.json(data); // $.getJSON(data);
+    }
+
+/* from http://mbostock.github.com/d3/ex/pack.html */
+function add_packed_bubbles(divid,data_arg,width_arg,height_arg){
+    // chart configuration variables
+    var margin = {top: 20, right: 20, bottom: 20, left: 20},
+        width  = 960,
+        height = 720,
+        xScale = d3.scale.linear(),
+        yScale = d3.scale.linear(),
+        xAxis  = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
+        yAxis  = d3.svg.axis().scale(yScale).orient("left"  ).tickSize(6, 0),
+        data = { "name": "Root Name", "children": [
+                 { "name": "Child 1", "children": [ 
+                    { "name": "1.1 GC", "children": [
+                      {"name": "GGchild 1.1.1", "size": 111 },
+                      {"name": "GGchild 1.1.2", "size": 112 },
+                      {"name": "GGchild 1.1.3", "size": 113 },
+                      {"name": "GGchild 1.1.4", "size": 114 } ] },
+                    { "name": "Grandchild 2.1", "children": [
+                      {"name": "GGchild 1.2.1", "size": 211 },
+                      {"name": "GGchild 1.2.2", "size": 212 },
+                      {"name": "GGchild 1.2.3", "size": 213 } ] },
+                    { "name": "Grandchild 3.1", "children": [
+                      {"name": "GGchild 1.3.1", "size": 311 },
+                      {"name": "GGchild 1.3.2", "size": 312 } ] } ] },
+                 { "name": "Child 2", "children": [ 
+                    { "name": "Grandchild 1.1", "children": [
+                      {"name": "GGchild 2.1.1", "size": 111 },
+                      {"name": "GGchild 2.1.2", "size": 112 },
+                      {"name": "GGchild 2.1.3", "size": 113 } ] } ] } ] };
+
+    // process positional arguments, assigning defaults as necessary
+    divid  = munge_selector(divid,     "#chart");
+    data   = json_or_object(data_arg,  data);
+    width  = default_number(width_arg, width);
+    height = default_number(height_arg,height);
+    
+    // this overwrites any existing "innerHtml" content with new styles
+    // I'm sure d3 has a better way to import a style sheet, but...
+    var divsel = d3.select(divid).html("<link href='packed_bubbles.css' rel='stylesheet' type='text/css' />");
+    
+    var format = d3.format(",d");
+
+    var pack = d3.layout.pack()
+        .size([width - 4, height - 4])
+        .value(function(d) { return d.size; });
+
+    var vis = d3.select(divid).append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("class", "pack")
+      .append("g")
+        .attr("transform", "translate(2, 2)");
+
+    // d3.json("flare.json", function(json) {
+    
+    function plot_data(json) {
+        var node = vis.data([json]).selectAll("g.node")
+            .data(pack.nodes)
+            .enter().append("g")
+            .attr("class", function(d) { return d.children ? "node" : "leaf node"; })
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+        node.append("title")
+            .text(function(d) { return d.name + (d.children ? "" : ": " + format(d.size)); });
+
+        node.append("circle")
+            .attr("r", function(d) { return d.r; });
+
+        node.filter(function(d) { return !d.children; }).append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", ".3em")
+            .text(function(d) { return d.name.substring(0, d.r / 3); });
+        return node.length
+        }
+    
+    return plot_data(data);
+    } // function add_packed_bubbles

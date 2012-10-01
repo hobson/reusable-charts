@@ -72,28 +72,45 @@ var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.
         .text(function(d) { return d; });
 </script>
 
-<p>Here's how reusable_charts.timeSeriesChart() would present this data out of the box
+<p>Here's how to use reusable_charts.timeSeriesChart() to present this data without any data munging. 
 
-<script type="text/javascript">
+<pre>
+    var chart = timeSeriesChart();
+</pre>
 
+<p>which is equivalent to 
+
+<pre>
     var chart = timeSeriesChart()
         .x(function(d) { return +d[0]; })
         .y(function(d) { return +d[1]; });
+</pre>
 
+<p>Once you've instantiated a chart closure/object
 
-  d3.select(".content").append("div")
-    .attr("class", "ex2")
-      .datum(data)
-      .call(chart);
+<pre>
+    d3.select(".content").append("div")
+        .attr("class", "ex2")
+        .datum(data) // datum() = data() but without a join (no enter and exit selections)
+        .call(chart);
+</pre>
+
+<script type="text/javascript">
+
+    var chart = timeSeriesChart();
+//        .x(function(d) { return +d[0]; })  
+//        .y(function(d) { return +d[1]; });
+    d3.select(".content").append("div")
+        .attr("class", "ex2")
+        .datum(data) // dataum = data but without a join (no enter and exit selections)
+        .call(chart);
 
 </script>
 
-<p>Here's how standard_charts.scatterChart() would present this data out of the box
+<p>Here's how standard_charts.scatterChart() would present this data out of the box.
 
 <pre>
-    var chart = scatterChart()
-        .x(function(d) { return +d[0]; })
-        .y(function(d) { return +d[1]; });
+    var chart = scatterChart();
 
     d3.select(".content").append("div")
         .attr("class", "ex3")
@@ -101,9 +118,7 @@ var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.
         .call(chart);
 </pre>
 <script>
-    var chart = scatterChart()
-        .x(function(d) { return +d[0]; })
-        .y(function(d) { return +d[1]; });
+    var chart = scatterChart();
 
     d3.select(".content").append("div")
         .attr("class", "ex3")
@@ -165,6 +180,47 @@ var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.
             .x(function(d) { return formatDate.parse(d.date); })
             .y( function(d) {return +d.price; });
     var dv2 = d3.select("#existing_tag_id2").datum(dtdata).call(c2);
+</script>
+
+
+<p>Here is one way to create a "raw" scatter plot, but it doesn't scale the data in any useful way:
+
+<pre>
+    var ex4 = d3.select(".content").append("div").append("svg").attr("class", "ex4")
+
+    ex4.selectAll("circle").data(data).enter().append("circle")
+       .attr("cx", xValue ).attr("cy",yValue ).attr("r", 8);
+</pre>
+
+<p> The xValue and yValue functions are from standard_charts.js:
+
+<pre>
+    function xValue(d) { return d[0]; }
+    function yValue(d) { return d[1]; }
+</pre>
+
+<script>
+
+var ex4 = d3.select(".content").append("div").append("svg").attr("class", "ex4")
+
+ex4.selectAll("circle").data(data).enter().append("circle")
+   .attr("cx", xValue )
+   .attr("cy",yValue )
+   .attr("r", 8);
+
+</script>
+
+<p>Here's a packed buble chart from the d3.js example gallery:
+
+<p id="existing_tag_id3">
+
+<pre>
+add_packed_bubbles("existing_tag_id3","flare.json");
+</pre>
+<script>
+
+add_packed_bubbles("existing_tag_id3");
+
 </script>
 
 </body>
