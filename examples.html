@@ -210,17 +210,82 @@ ex4.selectAll("circle").data(data).enter().append("circle")
 
 </script>
 
-<p>Here's a packed buble chart from the d3.js example gallery:
+<p>Here's a packed bubble chart:
 
 <p id="existing_tag_id3">
 
 <pre>
-add_packed_bubbles("existing_tag_id3","flare.json");
+data = { "name": "Root Name", "children": [
+                 { "name": "Child 1","children": [ 
+                    { "name": "1.1 GC", "children": [
+                      {"name": "GGchild 1.1.1", "size": 111 },
+                      {"name": "GGchild 1.1.2", "size": 211 },
+                      {"name": "GGchild 1.1.3", "size": 311 },
+                      {"name": "GGchild 1.1.4", "size": 411 } ] },
+                    { "name": "Grandchild 2.1", "children": [
+                      {"name": "GGchild 1.2.1", "size": 121 },
+                      {"name": "GGchild 1.2.2", "size": 221 },
+                      {"name": "GGchild 1.2.3", "size": 321 } ] },
+                    { "name": "Grandchild 3.1", "children": [
+                      {"name": "GGchild 1.3.1", "size": 131 },
+                      {"name": "GGchild 1.3.2", "size": 231 } ] } ] },
+                 { "name": "Child 2", "children": [ 
+                    { "name": "Grandchild 1.1", "children": [
+                      {"name": "GGchild 2.1.1", "size": 112 },
+                      {"name": "GGchild 2.1.2", "size": 212 },
+                      {"name": "GGchild 2.1.3", "size": 312 } ] } ] } ] };
+add_packed_bubbles("existing_tag_id3",data);
 </pre>
 <script>
+data = { "name": "Root Name", "children": [
+                 { "name": "Child 1","children": [ 
+                    { "name": "1.1 GC", "children": [
+                      {"name": "GGchild 1.1.1", "size": 111 },
+                      {"name": "GGchild 1.1.2", "size": 211 },
+                      {"name": "GGchild 1.1.3", "size": 311 },
+                      {"name": "GGchild 1.1.4", "size": 411 } ] },
+                    { "name": "Grandchild 2.1", "children": [
+                      {"name": "GGchild 1.2.1", "size": 121 },
+                      {"name": "GGchild 1.2.2", "size": 221 },
+                      {"name": "GGchild 1.2.3", "size": 321 } ] },
+                    { "name": "Grandchild 3.1", "children": [
+                      {"name": "GGchild 1.3.1", "size": 131 },
+                      {"name": "GGchild 1.3.2", "size": 231 } ] } ] },
+                 { "name": "Child 2", "children": [ 
+                    { "name": "Grandchild 1.1", "children": [
+                      {"name": "GGchild 2.1.1", "size": 112 },
+                      {"name": "GGchild 2.1.2", "size": 212 },
+                      {"name": "GGchild 2.1.3", "size": 312 } ] } ] } ] };
+add_packed_bubbles("existing_tag_id3",data);
+</script>
 
-add_packed_bubbles("existing_tag_id3");
+<p>Here's a scattered set of packed bubbles:
 
+<p id="existing_tag_id4">
+
+<pre>
+data =  [{ "name": "1.1 GC", "x":100,"y":100, "children": [
+                      {"name": "GGchild 1.1.1", "size": 111 },
+                      {"name": "GGchild 1.1.2", "size": 211 },
+                      {"name": "GGchild 1.1.3", "size": 311 },
+                      {"name": "GGchild 1.1.4", "size": 411 } ] },
+        { "name": "1.2 GC", "x":200,"y":200, "children": [
+                      {"name": "GGchild 1.2.1", "size": 121 },
+                      {"name": "GGchild 1.2.2", "size": 221 },
+                      {"name": "GGchild 1.2.3", "size": 321 } ] }];
+add_packed_bubbles("existing_tag_id4",data);
+</pre>
+<script>
+data =  [{ "name": "1.1 GC", "x":100,"y":100, "children": [
+                      {"name": "GGchild 1.1.1", "size": 111 },
+                      {"name": "GGchild 1.1.2", "size": 211 },
+                      {"name": "GGchild 1.1.3", "size": 311 },
+                      {"name": "GGchild 1.1.4", "size": 411 } ] },
+        { "name": "1.2 GC", "x":200,"y":200, "children": [
+                      {"name": "GGchild 1.2.1", "size": 121 },
+                      {"name": "GGchild 1.2.2", "size": 221 },
+                      {"name": "GGchild 1.2.3", "size": 321 } ] }];
+add_packed_bubbles("existing_tag_id4",data);
 </script>
 
 </body>

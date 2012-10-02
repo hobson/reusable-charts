@@ -27,7 +27,7 @@ http://bost.ocks.org/mike/chart/
 
 /* 
 Closure function (function with persistent configuration values, like an object) 
-attempt to immitate pattern at http://bost.ocks.org/mike/chart/  
+attempt to immitate pattern at http://bost.ocks.org/mike/chart/ but doesn't work yet!
 */
 function pieChart() {
     /* TODO: Add getters/setters per Mike Bostocks (D3 author) */
@@ -300,7 +300,8 @@ function my_marker(projection) {
     return marker;
     }
 
-/* based on timeSeriesChart at http://bost.ocks.org/mike/chart/time-series-chart.js */
+/* based on timeSeriesChart at http://bost.ocks.org/mike/chart/time-series-chart.js 
+but doesn't work yet !!!!!!!!!!!!!!!!!!!! */
 function scatterChart() {
   var margin = {top: 20, right: 20, bottom: 20, left: 20},
       width  = 760,
@@ -432,7 +433,7 @@ function get_columns(x,y) {
     if (typeof(x) === "undefined") { var x=[]; }
     if (typeof(y) === "undefined") { 
         var y=[];
-        if ( x[0] && x[0].length === 2 ) // if x is a list of pairs 
+        if ( x.length && x[0] && x[0].length === 2 ) // if x is a list of pairs 
             for (var yi in x) y.push(yi);
         else if ( x.length === 2 )  // if x is a pair of lists
             for (var yi in x[1]) y.push(yi); 
@@ -545,6 +546,7 @@ function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
         canvas = markfun(canvas,r,marginX+x[i],marginY+y[i],stroke,fill);
     } // function add_geo_scatter
 
+
 // non-closured function
 function add_pie_chart(wedges,r,title,divid,css_class,highlight_color,x,y) {
     divid = munge_selector(divid,"#piemap");
@@ -629,7 +631,7 @@ function add_pie_chart(wedges,r,title,divid,css_class,highlight_color,x,y) {
         .attr("text-align", "middle") // nobody uses this -- https://groups.google.com/forum/?fromgroups=#!topic/mozilla.dev.tech.svg/G-DFbPv7MFM
         .attr("text-anchor", "middle") //center the text on it's origin
         .text(function(d, i) { return wedges[i].label; } ); //get the label from our original data array
-    } // function chart()
+    } // function add_pie_chart()
 
 function json_or_object(data,default_value) {
     var typ = typeof data;
@@ -641,27 +643,29 @@ function json_or_object(data,default_value) {
     }
 
 /* from http://mbostock.github.com/d3/ex/pack.html */
-function add_packed_bubbles(divid,data_arg,width_arg,height_arg){
+function add_packed_bubbles(divid,data_arg,height_arg,width_arg,x,y){
     // chart configuration variables
-    var width  = 960,
-        height = 720,
+    var height = 720,
+        width  = 960,
+        x0 = 2,
+        y0 = 2,
         // margin = {top: 20, right: 20, bottom: 20, left: 20}, 
         // xScale = d3.scale.linear(),
         // yScale = d3.scale.linear(),
         // xAxis  = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
         // yAxis  = d3.svg.axis().scale(yScale).orient("left"  ).tickSize(6, 0),
         data = { "name": "Root Name", "children": [
-                 { "name": "Child 1", "children": [ 
-                    { "name": "1.1 GC", "children": [
+                 { "name": "Child 1","children": [ 
+                    { "name": "Grandchild 1.1", "children": [
                       {"name": "GGchild 1.1.1", "size": 111 },
                       {"name": "GGchild 1.1.2", "size": 211 },
                       {"name": "GGchild 1.1.3", "size": 311 },
                       {"name": "GGchild 1.1.4", "size": 411 } ] },
-                    { "name": "Grandchild 2.1", "children": [
+                    { "name": "Grandchild 1.2", "children": [
                       {"name": "GGchild 1.2.1", "size": 121 },
                       {"name": "GGchild 1.2.2", "size": 221 },
                       {"name": "GGchild 1.2.3", "size": 321 } ] },
-                    { "name": "Grandchild 3.1", "children": [
+                    { "name": "Grandchild 1.3", "children": [
                       {"name": "GGchild 1.3.1", "size": 131 },
                       {"name": "GGchild 1.3.2", "size": 231 } ] } ] },
                  { "name": "Child 2", "children": [ 
@@ -673,8 +677,10 @@ function add_packed_bubbles(divid,data_arg,width_arg,height_arg){
     // process positional arguments, assigning defaults as necessary
     divid  = munge_selector(divid,     "#chart");
     data   = json_or_object(data_arg,  data);
-    width  = default_number(width_arg, width);
     height = default_number(height_arg,height);
+    width  = default_number(width_arg, width);
+    x0     = default_number(x0_arg,    x0);
+    y0     = default_number(y0_arg,    y0);
     
     // this overwrites any existing "innerHtml" content with new styles
     // I'm sure d3 has a better way to import a style sheet, but...
@@ -691,7 +697,7 @@ function add_packed_bubbles(divid,data_arg,width_arg,height_arg){
         .attr("height", height)
         .attr("class", "pack")
       .append("g")
-        .attr("transform", "translate(2, 2)");
+        .attr("transform", "translate("+x0+","+y0+")");
 
     // d3.json("flare.json", function(json) {
     
@@ -701,6 +707,7 @@ function add_packed_bubbles(divid,data_arg,width_arg,height_arg){
             .enter().append("g")
             .attr("class", function(d) { return d.children ? "node" : "leaf node"; })
             .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+//            .attr("transform", function(d) { return "translate(" + d.x0 + "," + d.y0 + ")" });
 
         node.append("title")
             .text(function(d) { return d.name + (d.children ? "" : ": " + format(d.size)); });
@@ -717,3 +724,139 @@ function add_packed_bubbles(divid,data_arg,width_arg,height_arg){
     
     return plot_data(data);
     } // function add_packed_bubbles
+
+function add_packed_bubbles_list(divid,data,height,width) {
+    for (var i=0; i<data.length; i++) {
+        chart = charts[i];
+        divid="bubblemap";
+        var r = 25;
+        for (var j=0; j<chart.values.length; j++) {
+            wedges[j] = { "label":   chart.labels[j], 
+                          "value":   chart.values[j], 
+                          "href":    "/report/"+chart.ids[j],
+                          "tooltip":     chart.values[j]+" beds in "+chart.names[j],
+                          "css_class"  : "", // "piewedge"
+                          "css_id"     : divid+"-piewedge-"+j,
+                          "r"          : j<num_big_wedges ? chart.r : chart.r*1.35,
+                          "color"      : j<num_big_wedges ? hot[j%hot.length] : cool[j%cool.length],
+                          "highlight_color": "rgb(210,226,105)",
+                         }; 
+            if (j<num_big_wedges) {
+                wedges[j]["color"] = hot[j%hot.length]; }
+            else {
+                wedges[j]["color"] = cool[j%cool.length]; }
+            //document.write(wedges[j].tooltip+"<br>");
+            } // for each wedge
+        //add_pie_chart(wedges, r, chart.region, divid,"pieplate");
+        //add_packed_bubbleS(); // FIXME
+        } // for each set of bubbles in the list
+    } // function add_packed_bubbles_list()
+
+function add_pie_chart_list(charts,piesizes, num_big_wedges,hot,cool,independent) {
+    piesizes = [50, 50, 50, 50, 50, 50, 100];
+    num_big_wedges = 2;
+    hot   = ['#CB0','#B41','#C62', '#930','#E74'];  
+    independent = ['#CCC']
+    cool = ['#999','#888','#666','#888','#999','#666'];// ['#9ecae1','#c6dbef'];
+    for (var i=0; i<Math.min(charts.length,piesizes.length); i++) {
+        chart = charts[i];
+        var wedges = [];
+        divid="piemap";
+        var r = piesizes[i];
+        if (r<1) { r = chart.r; }
+        for (var j=0; j<chart.values.length; j++) {
+            wedges[j] = { "label":   chart.labels[j], 
+                          "value":   chart.values[j], 
+                          "href":    "/report/"+chart.ids[j],
+                          "tooltip":     chart.values[j]+" beds in "+chart.names[j],
+                          "css_class"  : "", // "piewedge"
+                          "css_id"     : divid+"-piewedge-"+j,
+                          "r"          : j<num_big_wedges ? chart.r : chart.r*1.35,
+                          "color"      : j<num_big_wedges ? hot[j%hot.length] : cool[j%cool.length],
+                          "highlight_color": "rgb(210,226,105)",
+                         }; 
+            if (j<num_big_wedges) {
+                wedges[j]["color"] = hot[j%hot.length]; }
+            else {
+                wedges[j]["color"] = cool[j%cool.length]; }
+            //document.write(wedges[j].tooltip+"<br>");
+            } // for each wedge
+            add_pie_chart(wedges, r, chart.region, divid,"pieplate");
+            
+            //var pc = pieChart(wedges, r, chart.region, "#"+divid,"pieplate");
+            //d3.select("#"+divid).call(pc);
+        } // for each chart
+    } // function add_pie_chart_list
+
+function add_scattered_packed_bubbles(divid,x,y,marker,r,height,width,stroke,fill) {
+    divid =munge_selector(divid,"#map");
+    marker=default_string(marker,"diamond");
+    stroke=default_string(stroke,"#447");
+    fill  =default_string(fill,"#6773b7");
+    r     =default_number(r,5);
+    height=default_number(height,610);
+    width =default_number(width,920); 
+    
+    if (marker[0] === "d" || marker[0] === "D" ) markfun=draw_diamond;
+    else markfun = draw_circle;
+
+    xy = get_columns(x,y); x=xy[0]; y=xy[1];
+
+    var N=Math.min(x.length,y.length)
+    var minX=Math.min.apply( null, x ); 
+    var maxX=Math.max.apply( null, x );
+    var minY=Math.min.apply( null, y );
+    var maxY=Math.max.apply( null, y );
+    var Cx = (maxX+minX)*0.5 // map horizontal (east-west) center in degrees
+    var Cy = (maxY+minY)*0.5 // map horizontal (east-west) center in degrees
+    var Cx_rad = deg2rad(Cx);
+    var Cy_rad = deg2rad(Cy);
+    
+    // convert to linear distance in meters relative to center/origin, with down positive and right positive
+    for (i = 0; i < N; i++) { 
+        x[i] = deg2rad(x[i]-Cx)*radlon2m(Cy_rad);
+        y[i] = deg2rad(Cy-y[i])*radlat2m(Cy_rad);  // Cy unnecessary
+    }
+    // Distance calcs assume spherical earth, which means ~.1% inacuracy for all calcs
+    
+    var marginX = 40,  marginY = 30;  // size of clear margin around perimeter of map canvas
+
+    // data bounds in meters relative to center
+    var minX_m=Math.min.apply( null, x ); 
+    var maxX_m=Math.max.apply( null, x );
+    var minY_m=Math.min.apply( null, y );
+    var maxY_m=Math.max.apply( null, y ); 
+
+    var sfX =(width-2*marginX)/(maxX_m-minX_m);
+    var sfY =(height-2*marginY)/(maxY_m-minY_m); 
+    // maintain orthographic scale (don't stretch to fit canvas)
+    sfX = Math.min(sfX,sfY); sfY=sfX;
+    function Xscale(value,i,values) {
+        return (value-minX_m)*sfX; }
+    function Yscale(value,i,values) {
+        return (value-minY_m)*sfY; }
+    
+    // sfX = sfY = 0.0031899591573045817 // assumes square pixels
+    // minX_m = -134835.72265379986
+    // minY_m = -87775.41849049611
+    
+    x = x.map(Xscale)
+    y = y.map(Yscale) 
+
+//    bubbles = { "name": "Clusters", "children": [
+//                {"name": "0", "x": x[0], "y": y[0], "children": [ ] }] };
+//    for (var i=0; i<x.length; i++) {
+//        for (var j=0; i<bubbles.children.length; j++) {
+//            if x[i]-bubbles 
+//            }
+//        }
+
+    // create a canvas to draw an SVG drawing on
+    var canvas = d3.select(divid).append("svg")
+        .attr("width", width).attr("height", height);
+    
+    // add a large gray dot for each x,y coordinate computed
+    for (i = 0; i < N; i++) 
+        canvas = markfun(canvas,r,marginX+x[i],marginY+y[i],stroke,fill);
+    } // function add_geo_scatter
+
