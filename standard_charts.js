@@ -25,9 +25,85 @@
 http://bost.ocks.org/mike/chart/
 */
 
+// Return an array of a pair of arrays, even if the input (x and y) contained a list of pairs
+// in x or pair of arrays in x alone, or two separate arrays in x and y.
+// DOESNT WORK!!!
+function get_columns(x,y) {
+    if (typeof(x) === "undefined") { var x=[]; }
+    if (typeof(y) === "undefined") { 
+        var y=[];
+        if ( x.length && x[0] && x[0].length === 2 ) // if x is a list of pairs 
+            for (var yi in x) y.push(yi);
+        else if ( x.length === 2 )  // if x is a pair of lists
+            for (var yi in x[1]) y.push(yi); 
+        else for (var yi in x) y.push(0);
+        } // if y undefined
+    return [x,y]; }
+    
+// Return an array of a pair of arrays, even if the input (x and y) contained a list of pairs
+// in x or pair of arrays in x alone, or two separate arrays in x and y.
+function get_rows(x) {
+    var dat = [];
+    if (typeof(x) != "undefined") {
+        if (x.length>1 && x[0].length===2) 
+            return x;
+        if (x.length === 2 && x[0].length===x[1].length) 
+            for (var i=0;i<x[0].length; i++) {
+                dat.push([ x[0][i], x[1][i] ]); }
+        } // if not undefined 
+    return dat; 
+    }
+
+function xValue(d) { return d[0]; }
+function yValue(d) { return d[1]; }
+
+// FIXME: equivalent or "mode" for classes instead of ID's
+// add a pound/hash symbol to the beginning of an id selector to make d3 happy
+function munge_selector(divid,defaultid) {
+    if (!divid.length || divid[0] != "#") 
+        divid = "#"+divid;
+    divid = divid.length > 1 ? divid : defaultid;
+    return divid
+    }
+
+// set a default value for a numerical function argument if it isn't supplied (or undefined)
+// FIXME: check that the arg and the default are strings and coerce
+function default_number(arg,default_value) {
+    if (typeof(arg) === "undefined")
+        if (typeof(default_value) != "undefined") arg = +default_value;
+        else arg = 0;
+    return +arg; }
+
+// set a default value for a string function argument if it isn't supplied (or undefined)
+// FIXME: check that the arg and the default are strings and coerce
+function default_string(arg,default_value) {
+    if (typeof(arg) === "undefined")
+        if (typeof(default_value) != "undefined") arg = ""+default_value;
+        else arg = "";
+    return ""+arg; }
+
+function draw_circle(canvas,r,cx,cy,stroke,fill) {
+    canvas.append("circle")
+        .style("stroke", stroke)
+        .style("fill", fill)
+        .attr("r", r)
+        .attr("cx", cx)
+        .attr("cy", cy);
+    return canvas;
+    }
+
+function draw_diamond(canvas,r,cx,cy,stroke,fill) {
+    canvas.append("path")
+        .attr("d", "M"+(cx+r)+","+(cy+0)+"L"+(cx+0)+","+(cy+r)+"L"+(cx-r)+","+(cy+0)+"L"+(cx+0)+","+(cy-r)+"Z")
+        .style("stroke", stroke)
+        .style("fill", fill); // M=move,L=line,Z=close_up_shape
+    return canvas;
+    }
+
 /* 
 Closure function (function with persistent configuration values, like an object) 
-attempt to immitate pattern at http://bost.ocks.org/mike/chart/ but doesn't work yet!
+attempt to immitate pattern at http://bost.ocks.org/mike/chart/ but 
+DOESN'T WORK!
 */
 function pieChart() {
     /* TODO: Add getters/setters per Mike Bostocks (D3 author) */
@@ -136,6 +212,40 @@ function pieChart() {
   return chart;
 } // function pieChart
 
+function I(d) { return d; }
+function add_bar_chart(divid,data,width,height) {
+    divid=munge_selector(divid,"#barchart0");
+    rows  = get_rows(data);
+    //cols  = get_columns(data);
+    width  = default_number(width,  400);
+    margin = 4;
+    height = default_number(height, 15.0*Math.pow(data[0].length,0.8));
+    var xMax = d3.max(rows, xValue);
+    var xMin = d3.min(rows, xValue);
+    var xScale = d3.scale.linear().domain([xMin, xMax]).range( [0, 500]); //width-margin]);
+    var yScale = d3.scale.linear().domain([0, d3.max(data[1])])
+                                  .range( [0, (height-margin)/data[0].length]);
+
+    d3.select(".content").append("div")
+        .attr("class", "barchart")
+      .selectAll("div")
+        .data(rows)
+      .enter().append("div")
+        .style("width", function(d) { return (xScale(d[0]) + "px"); })
+        //.style("width", function(d) { return d[0] * 10 + "px"; })
+        .text(function(d) { return d; });
+
+//    d3.select(divid).append("div")
+//        .attr("class", "barchart")
+//      .selectAll("div")
+//         .data(data)
+//      .enter().append("div")
+//         .attr("class","bar")
+//         .style("width", function(d) { return xScale(d) + "px"; })
+//         .text(function(d) { return ""+d; });
+
+    }
+
 /* http://bost.ocks.org/mike/chart/time-series-chart.js */
 function timeSeriesChart() {
   var margin = {top: 20, right: 20, bottom: 20, left: 20},
@@ -243,8 +353,6 @@ function timeSeriesChart() {
   return chart;
 }
 
-function xValue(d) { return d[0]; }
-function yValue(d) { return d[1]; }
 function lineLinear(points) { return points.join("L"); }
 function d3_functor(v) {
     return typeof v === "function" ? v : function() { return v; }; }
@@ -429,61 +537,7 @@ function scatterChart() {
 } // function timeSeriesChart
 
 
-// Return a pair of arrays, even if the input (x and y) contained a list of pairs
-// in x or pair of arrays in x alone, or two separate arrays in x and y.
-function get_columns(x,y) {
-    if (typeof(x) === "undefined") { var x=[]; }
-    if (typeof(y) === "undefined") { 
-        var y=[];
-        if ( x.length && x[0] && x[0].length === 2 ) // if x is a list of pairs 
-            for (var yi in x) y.push(yi);
-        else if ( x.length === 2 )  // if x is a pair of lists
-            for (var yi in x[1]) y.push(yi); 
-        else for (var yi in x) y.push(0);
-        } // if y undefined
-    return [x,y]; }
 
-// add a pound/hash symbol to the beginning of an id selector to make d3 happy
-function munge_selector(divid,defaultid) {
-    if (!divid.length || divid[0] != "#") 
-        divid = "#"+divid;
-    divid = divid.length > 1 ? divid : defaultid;
-    return divid
-    }
-
-// set a default value for a numerical function argument if it isn't supplied (or undefined)
-// FIXME: check that the arg and the default are strings and coerce
-function default_number(arg,default_value) {
-    if (typeof(arg) === "undefined")
-        if (typeof(default_value) != "undefined") arg = +default_value;
-        else arg = 0;
-    return +arg; }
-
-// set a default value for a string function argument if it isn't supplied (or undefined)
-// FIXME: check that the arg and the default are strings and coerce
-function default_string(arg,default_value) {
-    if (typeof(arg) === "undefined")
-        if (typeof(default_value) != "undefined") arg = ""+default_value;
-        else arg = "";
-    return ""+arg; }
-
-function draw_circle(canvas,r,cx,cy,stroke,fill) {
-    canvas.append("circle")
-        .style("stroke", stroke)
-        .style("fill", fill)
-        .attr("r", r)
-        .attr("cx", cx)
-        .attr("cy", cy);
-    return canvas;
-    }
-
-function draw_diamond(canvas,r,cx,cy,stroke,fill) {
-    canvas.append("path")
-        .attr("d", "M"+(cx+r)+","+(cy+0)+"L"+(cx+0)+","+(cy+r)+"L"+(cx-r)+","+(cy+0)+"L"+(cx+0)+","+(cy-r)+"Z")
-        .style("stroke", stroke)
-        .style("fill", fill); // M=move,L=line,Z=close_up_shape
-    return canvas;
-    }
 
 function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
     divid =munge_selector(divid,"#map");
@@ -551,8 +605,8 @@ function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
 
 
 // non-closured function
-function add_pie_chart(divid,wedges,r,title,css_class,highlight_color,x,y) {
-    divid = munge_selector(divid,"#piemap");
+function add_pie_chart(divid, wedges, r, title, css_class, highlight_color, x, y) {
+    divid = munge_selector(divid, "#piemap");
     xy = get_columns(x,y); x=xy[0]; y=xy[1];
     
     var N = wedges.length
@@ -751,7 +805,6 @@ function add_packed_bubbles_list(divid,data_arg,height_arg,width_arg) {
     height = default_number(height_arg,height);
     width  = default_number(width_arg, width);
     for (var i=0; i<data.length; i++) {
-        console.log(data[i]);
         add_packed_bubbles(divid, data[i], height, width, data[i].x, data[i].y, data[i].size)
         } // for each set of bubbles in the list
     } // function add_packed_bubbles_list()
@@ -788,7 +841,6 @@ function add_pie_chart_list(divid,charts,piesizes, num_big_wedges,hot,cool,indep
         if (r<1) { r = chart.r; }
         for (var j=0; j<chart.values.length; j++) {
             if (chart.values[j]>0) {
-                console.log(j+'='+chart.values[j]+'('+chart.title)
                 wedges[j] = { "label":   chart.labels[j], 
                               "value":   chart.values[j], 
                               "href":    "/report/"+chart.ids[j],

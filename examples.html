@@ -59,8 +59,32 @@ var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.
       color: white;
     }
     .ex1 rect { stroke: white; fill: steelblue; }
-    /* .ex1 text.bar { fill: white;  } *}
 </style>
+
+<p>Styles are important:
+
+<pre>
+    .ex1 {
+      margin-left: 40px;
+      font: 10px sans-serif;
+      shape-rendering: crispEdges; }
+    .ex1 div {
+      background-color: steelblue;
+      text-align: right;
+      padding: 3px; margin: 1px;
+      color: white; }
+    .ex1 rect { stroke: white; fill: steelblue; }
+</pre>
+
+<p> Here's the javascript in Bostok`s chaining style:
+
+<pre>
+    d3.select(".content").append("div").attr("class", "ex1")
+      .selectAll("div").data(data)
+      .enter().append("div")
+        .style("width", function(d) { return d[0] * 10 + "px"; })
+        .text(function(d) { return d; });
+</pre>
 
 <script type="text/javascript">
     d3.select(".content").append("div")
@@ -70,6 +94,33 @@ var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.
       .enter().append("div")
         .style("width", function(d) { return d[0] * 10 + "px"; })
         .text(function(d) { return d; });
+</script>
+
+<p>This is an equivalent standard_charts.js version:</p>
+
+<style type="text/css">
+    .barchart {
+      margin-left: 40px;
+      font: 10px sans-serif;
+      shape-rendering: crispEdges;
+    }
+    .barchart div {
+      background-color: steelblue;
+      text-align: right;
+      padding: 3px; margin: 1px;
+      color: white;
+    }
+    .barchart rect { stroke: white; fill: steelblue; }
+</style>
+
+<pre>
+    add_bar_chart('ex3b',data);
+</pre>
+
+<p id="barchart0">
+
+<script type="text/javascript">
+    add_bar_chart('barchart',data);
 </script>
 
 <p>Here's how to use reusable_charts.timeSeriesChart() to present this data without any data munging. 
