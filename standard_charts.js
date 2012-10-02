@@ -429,6 +429,8 @@ function scatterChart() {
 } // function timeSeriesChart
 
 
+// Return a pair of arrays, even if the input (x and y) contained a list of pairs
+// in x or pair of arrays in x alone, or two separate arrays in x and y.
 function get_columns(x,y) {
     if (typeof(x) === "undefined") { var x=[]; }
     if (typeof(y) === "undefined") { 
@@ -441,6 +443,7 @@ function get_columns(x,y) {
         } // if y undefined
     return [x,y]; }
 
+// add a pound/hash symbol to the beginning of an id selector to make d3 happy
 function munge_selector(divid,defaultid) {
     if (!divid.length || divid[0] != "#") 
         divid = "#"+divid;
@@ -639,15 +642,19 @@ function json_or_object(data,default_value) {
     if (typ != "string") return default_value;
     if ((data.length>256) && (data[0]==='['))
         return JSON.parse(data);
-    return d3.json(data); // $.getJSON(data);
+    
+    var retdat = null;
+    return d3.json(data, function(d) { retdat = d;} ); //jquery uses $.getJSON(data);
+    return retdat;
     }
 
 /* from http://mbostock.github.com/d3/ex/pack.html */
-function add_packed_bubbles(divid,data_arg,height_arg,width_arg,x,y){
+function add_packed_bubbles(divid, data_arg, height_arg, width_arg, x0_arg, y0_arg, size_arg){ // size is percent of height and width
     // chart configuration variables
-    var height = 720,
-        width  = 960,
-        x0 = 2,
+    var size = 99.5, // percent
+        height = 480,
+        width  = 700,
+        x0 = 2, // FIXME: should be percent rather than pixels
         y0 = 2,
         // margin = {top: 20, right: 20, bottom: 20, left: 20}, 
         // xScale = d3.scale.linear(),
@@ -681,6 +688,7 @@ function add_packed_bubbles(divid,data_arg,height_arg,width_arg,x,y){
     width  = default_number(width_arg, width);
     x0     = default_number(x0_arg,    x0);
     y0     = default_number(y0_arg,    y0);
+    size   = default_number(size_arg,  size);
     
     // this overwrites any existing "innerHtml" content with new styles
     // I'm sure d3 has a better way to import a style sheet, but...
@@ -689,13 +697,14 @@ function add_packed_bubbles(divid,data_arg,height_arg,width_arg,x,y){
     var format = d3.format(",d");
 
     var pack = d3.layout.pack()
-        .size([width - 4, height - 4])
+        .size([size*width/100.0,size*height/100.0]) // width - 4, height - 4]) // OR: width - x0*2, height - y0*2])
         .value(function(d) { return d.size; });
 
     var vis = d3.select(divid).append("svg")
-        .attr("width", width)
+        .attr("width",  width)
         .attr("height", height)
         .attr("class", "pack")
+        .attr("id",    divid+'-'+data.name )
       .append("g")
         .attr("transform", "translate("+x0+","+y0+")");
 
@@ -713,42 +722,37 @@ function add_packed_bubbles(divid,data_arg,height_arg,width_arg,x,y){
             .text(function(d) { return d.name + (d.children ? "" : ": " + format(d.size)); });
 
         node.append("circle")
-            .attr("r", function(d) { return d.r; });
+            .attr("r", function(d) {  return d.r; });
 
         node.filter(function(d) { return !d.children; }).append("text")
             .attr("text-anchor", "middle")
             .attr("dy", ".3em")
-            .text(function(d) { return d.name.substring(0, d.r / 3); });
+            .text(function(d) { if (typeof d==='object') return d.name.substring(0, d.r / 3); return 0;});
         return node.length
         }
     
     return plot_data(data);
     } // function add_packed_bubbles
 
-function add_packed_bubbles_list(divid,data,height,width) {
+function add_packed_bubbles_list(divid,data_arg,height_arg,width_arg) {
+    var height = 480,
+        width  = 700,
+        data   = [{ "name": "1.1 GC", "x":10,"y":10, "size": 10, "children": [
+                      {"name": "GGchild 1.1.1", "size": 111 },
+                      {"name": "GGchild 1.1.2", "size": 211 },
+                      {"name": "GGchild 1.1.3", "size": 311 },
+                      {"name": "GGchild 1.1.4", "size": 411 } ] },
+                  { "name": "1.2 GC", "x":100,"y":100, "size": 10, "children": [
+                      {"name": "GGchild 1.2.1", "size": 121 },
+                      {"name": "GGchild 1.2.2", "size": 221 },
+                      {"name": "GGchild 1.2.3", "size": 321 } ] }];
+    divid  = munge_selector(divid,     "#bubblemap");
+    data   = json_or_object(data_arg,  data);
+    height = default_number(height_arg,height);
+    width  = default_number(width_arg, width);
     for (var i=0; i<data.length; i++) {
-        chart = charts[i];
-        divid="bubblemap";
-        var r = 25;
-        for (var j=0; j<chart.values.length; j++) {
-            wedges[j] = { "label":   chart.labels[j], 
-                          "value":   chart.values[j], 
-                          "href":    "/report/"+chart.ids[j],
-                          "tooltip":     chart.values[j]+" beds in "+chart.names[j],
-                          "css_class"  : "", // "piewedge"
-                          "css_id"     : divid+"-piewedge-"+j,
-                          "r"          : j<num_big_wedges ? chart.r : chart.r*1.35,
-                          "color"      : j<num_big_wedges ? hot[j%hot.length] : cool[j%cool.length],
-                          "highlight_color": "rgb(210,226,105)",
-                         }; 
-            if (j<num_big_wedges) {
-                wedges[j]["color"] = hot[j%hot.length]; }
-            else {
-                wedges[j]["color"] = cool[j%cool.length]; }
-            //document.write(wedges[j].tooltip+"<br>");
-            } // for each wedge
-        //add_pie_chart(divid,wedges, r, chart.title,"pieplate");
-        //add_packed_bubbleS(); // FIXME
+        console.log(data[i]);
+        add_packed_bubbles(divid, data[i], height, width, data[i].x, data[i].y, data[i].size)
         } // for each set of bubbles in the list
     } // function add_packed_bubbles_list()
 

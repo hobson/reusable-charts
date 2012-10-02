@@ -237,18 +237,19 @@ data = { "name": "Root Name", "children": [
 add_packed_bubbles("existing_tag_id3",data);
 </pre>
 <script>
-data = { "name": "Root Name", "children": [
+
+        data = { "name": "Root Name", "children": [
                  { "name": "Child 1","children": [ 
-                    { "name": "1.1 GC", "children": [
+                    { "name": "Grandchild 1.1", "children": [
                       {"name": "GGchild 1.1.1", "size": 111 },
                       {"name": "GGchild 1.1.2", "size": 211 },
                       {"name": "GGchild 1.1.3", "size": 311 },
                       {"name": "GGchild 1.1.4", "size": 411 } ] },
-                    { "name": "Grandchild 2.1", "children": [
+                    { "name": "Grandchild 1.2", "children": [
                       {"name": "GGchild 1.2.1", "size": 121 },
                       {"name": "GGchild 1.2.2", "size": 221 },
                       {"name": "GGchild 1.2.3", "size": 321 } ] },
-                    { "name": "Grandchild 3.1", "children": [
+                    { "name": "Grandchild 1.3", "children": [
                       {"name": "GGchild 1.3.1", "size": 131 },
                       {"name": "GGchild 1.3.2", "size": 231 } ] } ] },
                  { "name": "Child 2", "children": [ 
@@ -256,10 +257,11 @@ data = { "name": "Root Name", "children": [
                       {"name": "GGchild 2.1.1", "size": 112 },
                       {"name": "GGchild 2.1.2", "size": 212 },
                       {"name": "GGchild 2.1.3", "size": 312 } ] } ] } ] };
-add_packed_bubbles("existing_tag_id3",data);
+
+        add_packed_bubbles("existing_tag_id3",data);
 </script>
 
-<p>Here's a scattered set of packed bubbles:
+<p>FIXME: Here's a scattered set of packed bubbles:
 
 <p id="existing_tag_id4">
 
@@ -273,7 +275,8 @@ data =  [{ "name": "1.1 GC", "x":100,"y":100, "children": [
                       {"name": "GGchild 1.2.1", "size": 121 },
                       {"name": "GGchild 1.2.2", "size": 221 },
                       {"name": "GGchild 1.2.3", "size": 321 } ] }];
-add_packed_bubbles("existing_tag_id4",data);
+// FIXME:
+add_packed_bubbles_list("existing_tag_id4",data);
 </pre>
 <script>
 data =  [{ "name": "1.1 GC", "x":100,"y":100, "children": [
@@ -285,7 +288,7 @@ data =  [{ "name": "1.1 GC", "x":100,"y":100, "children": [
                       {"name": "GGchild 1.2.1", "size": 121 },
                       {"name": "GGchild 1.2.2", "size": 221 },
                       {"name": "GGchild 1.2.3", "size": 321 } ] }];
-add_packed_bubbles("existing_tag_id4",data);
+add_packed_bubbles_list("existing_tag_id4",data);
 </script>
 
 </body>
