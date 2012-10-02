@@ -36,7 +36,7 @@ function pieChart() {
         height = 100,
         wedges = {},
         r      = 100,
-        title  = 'Default Region',
+        title  = 'Default Title',
         divid  = '#notnecessary',
         css_class = 'pieplate',
         highlight_color = "rgb(210,226,105)", // mouseover highlight fill color
@@ -54,7 +54,7 @@ function pieChart() {
             .attr("width",  r*2.0+0.5) //set width and height of the canvas (attributes of <svg> tag)
             .attr("height", r*2.0+0.5)
             .attr("class", css_class) // give the svg drawing a class ("pieplate") so we can style things outside the circle (title, labels)
-            .attr("id", title_name ) // give this particular pie chart ("pieplate") an ID based on its unique region name, so Paul can position them individually
+            .attr("id", title_name ) // give this particular pie chart ("pieplate") an ID based on its unique Title
             .data([wedges])    // associate the svg object with the array of wedge values!
             .append("svg:g")      // make a group to contain just the piechart (stuff inside the circle)
             .attr("transform", "translate(" + r + "," + r + ")"); // move the center of the pie to the center of the "pieplate", the svg rectangle
@@ -548,7 +548,7 @@ function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
 
 
 // non-closured function
-function add_pie_chart(wedges,r,title,divid,css_class,highlight_color,x,y) {
+function add_pie_chart(divid,wedges,r,title,css_class,highlight_color,x,y) {
     divid = munge_selector(divid,"#piemap");
     xy = get_columns(x,y); x=xy[0]; y=xy[1];
     
@@ -567,7 +567,7 @@ function add_pie_chart(wedges,r,title,divid,css_class,highlight_color,x,y) {
         .attr("width",  r*2.0+0.5) //set width and height of the canvas (attributes of <svg> tag)
         .attr("height", r*2.0+0.5)
         .attr("class", css_class) // give the svg drawing a class ("pieplate") so we can style things outside the circle (title, labels)
-        .attr("id", title_name ) // give this particular pie chart ("pieplate") an ID based on its unique region name, so Paul can position them individually
+        .attr("id", title_name ) // give this particular pie chart ("pieplate") an ID based on its unique Title
         .data([wedges])    // associate the svg object with the array of wedge values!
         .append("svg:g")      // make a group to contain just the piechart (stuff inside the circle)
         .attr("transform", "translate(" + r + "," + r + ")"); // move the center of the pie to the center of the "pieplate", the svg rectangle
@@ -747,44 +747,61 @@ function add_packed_bubbles_list(divid,data,height,width) {
                 wedges[j]["color"] = cool[j%cool.length]; }
             //document.write(wedges[j].tooltip+"<br>");
             } // for each wedge
-        //add_pie_chart(wedges, r, chart.region, divid,"pieplate");
+        //add_pie_chart(divid,wedges, r, chart.title,"pieplate");
         //add_packed_bubbleS(); // FIXME
         } // for each set of bubbles in the list
     } // function add_packed_bubbles_list()
 
-function add_pie_chart_list(charts,piesizes, num_big_wedges,hot,cool,independent) {
-    piesizes = [50, 50, 50, 50, 50, 50, 100];
-    num_big_wedges = 2;
-    hot   = ['#CB0','#B41','#C62', '#930','#E74'];  
-    independent = ['#CCC']
-    cool = ['#999','#888','#666','#888','#999','#666'];// ['#9ecae1','#c6dbef'];
+// set a default value for a numerical function argument if it isn't supplied (or undefined)
+// FIXME: check that the arg and the default are strings and coerce
+function default_number_list(arg,default_value) {
+    if (typeof(arg) === "undefined")
+        if (typeof(default_value) != "undefined") arg = default_value;
+        else arg = [];
+    return arg; }
+
+// set a default value for a string function argument if it isn't supplied (or undefined)
+// FIXME: check that the arg and the default are strings and coerce
+function default_list(arg,default_value) {
+    if (typeof(arg) === "undefined")
+        if (typeof(default_value) != "undefined") arg = default_value;
+        else arg = [];
+    return arg; }
+
+function add_pie_chart_list(divid,charts,piesizes, num_big_wedges,hot,cool,independent) {
+    divid =          munge_selector(divid,"#piemap");
+    divid_name =     divid.replace('#','');
+    piesizes =       default_number_list(piesizes,[50, 50, 50, 50, 50, 50, 100]);
+    num_big_wedges = default_number(num_big_wedges,2);
+    hot   =          default_list(hot, ['#C71','#B41','#C62', '#930','#E74']);  
+    independent =    default_list(independent,['#CCC']);
+    cool =           default_list(cool, ['#999','#888','#666','#888','#999','#666']);// ['#9ecae1','#c6dbef'];
     for (var i=0; i<Math.min(charts.length,piesizes.length); i++) {
         chart = charts[i];
         var wedges = [];
-        divid="piemap";
         var r = piesizes[i];
+        var title_name = chart.title.replace(/\s/g, "");
         if (r<1) { r = chart.r; }
         for (var j=0; j<chart.values.length; j++) {
-            wedges[j] = { "label":   chart.labels[j], 
-                          "value":   chart.values[j], 
-                          "href":    "/report/"+chart.ids[j],
-                          "tooltip":     chart.values[j]+" beds in "+chart.names[j],
-                          "css_class"  : "", // "piewedge"
-                          "css_id"     : divid+"-piewedge-"+j,
-                          "r"          : j<num_big_wedges ? chart.r : chart.r*1.35,
-                          "color"      : j<num_big_wedges ? hot[j%hot.length] : cool[j%cool.length],
-                          "highlight_color": "rgb(210,226,105)",
-                         }; 
-            if (j<num_big_wedges) {
-                wedges[j]["color"] = hot[j%hot.length]; }
-            else {
-                wedges[j]["color"] = cool[j%cool.length]; }
-            //document.write(wedges[j].tooltip+"<br>");
+            if (chart.values[j]>0) {
+                console.log(j+'='+chart.values[j]+'('+chart.title)
+                wedges[j] = { "label":   chart.labels[j], 
+                              "value":   chart.values[j], 
+                              "href":    "/report/"+chart.ids[j],
+                              "tooltip":     chart.values[j]+" beds in "+chart.names[j],
+                              "css_class"  : "", // "piewedge"
+                              "css_id"     : divid_name+'-'+title_name+"-piewedge-"+j,  // each chart can be positioned using CSS, opacity is also by CSS
+                              "r"          : chart.r, //j<num_big_wedges ? chart.r : chart.r*1.35,
+                              "color"      : j<num_big_wedges ? hot[j%hot.length] : cool[j%cool.length],
+                              "highlight_color": "rgb(210,226,105)",
+                             }; 
+                if (j<num_big_wedges) {
+                    wedges[j]["color"] = hot[j%hot.length]; }
+                else {
+                    wedges[j]["color"] = cool[j%cool.length]; }
+                } // if chart.values>0
             } // for each wedge
-            add_pie_chart(wedges, r, chart.region, divid,"pieplate");
-            
-            //var pc = pieChart(wedges, r, chart.region, "#"+divid,"pieplate");
-            //d3.select("#"+divid).call(pc);
+            add_pie_chart(divid,wedges, r, chart.title, "pieplate");
         } // for each chart
     } // function add_pie_chart_list
 
