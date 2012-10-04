@@ -37,49 +37,48 @@
 
 <p>A scatter plot needs a 2-D array of numbers like...</p>
 
-<pre>
-var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.8]];
-</pre>
-<script type="text/javascript">
-var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.8]];
-</script>
+<pre>var data = [ [ 4,8], [8,10], [15,25], [17,12], [23,21], [20,5] ];</pre>
+
+<script type="text/javascript">var data = [ [ 4,8], [8,10], [15,25], [17,12], [23,21], [20,5] ];</script>
 
 <p>This is from the d3js.org bar-chart-1.html example, adjusted for 2-d data:</p>
 
 <style type="text/css">
-    .ex1 {
-      margin-left: 40px;
+    .barchart {
+      margin-left: 30px;
+      margin-right: 30px;
       font: 10px sans-serif;
-      shape-rendering: crispEdges;
-    }
-    .ex1 div {
-      background-color: steelblue;
-      text-align: right;
-      padding: 3px; margin: 1px;
+      shape-rendering: crispEdges; }
+    .barchart div {
+      background-image: url('progress_dot_on.png');
+      background-repeat: repeat-x;
+      background-color: gray;
       color: white;
-    }
-    .ex1 rect { stroke: white; fill: steelblue; }
+      text-align: right;
+      padding: 3px; margin: 1px; }
 </style>
 
 <p>Styles are important:
 
 <pre>
-    .ex1 {
-      margin-left: 40px;
+    .barchart {
+      margin-left: 30px;
+      margin-right: 30px;
       font: 10px sans-serif;
       shape-rendering: crispEdges; }
-    .ex1 div {
-      background-color: steelblue;
+    .barchart div {
+      background-image: url('progress_dot_on.png');
+      background-repeat: repeat-x;
+      background-color: gray;
+      color: white;
       text-align: right;
-      padding: 3px; margin: 1px;
-      color: white; }
-    .ex1 rect { stroke: white; fill: steelblue; }
+      padding: 3px; margin: 1px; }
 </pre>
 
 <p> Here's the javascript in Bostok`s chaining style:
 
 <pre>
-    d3.select(".content").append("div").attr("class", "ex1")
+    d3.select(".content").append("div").attr("class", "barchart")
       .selectAll("div").data(data)
       .enter().append("div")
         .style("width", function(d) { return d[0] * 10 + "px"; })
@@ -88,7 +87,7 @@ var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.
 
 <script type="text/javascript">
     d3.select(".content").append("div")
-        .attr("class", "ex1")
+        .attr("class", "barchart")
       .selectAll("div")
         .data(data)
       .enter().append("div")
@@ -100,17 +99,17 @@ var data = [[4,4*1.9], [8,8*1], [15,15*1.5], [16,16*0.9], [23,23*1.1], [42,42*0.
 
 <style type="text/css">
     .barchart {
-      margin-left: 40px;
+      margin-left: 30px;
+      margin-right: 30px;
       font: 10px sans-serif;
-      shape-rendering: crispEdges;
-    }
+      shape-rendering: crispEdges; }
     .barchart div {
-      background-color: steelblue;
-      text-align: right;
-      padding: 3px; margin: 1px;
+      background-image: url('progress_dot_on.png');
+      background-repeat: repeat-x;
+      background-color: gray;
       color: white;
-    }
-    .barchart rect { stroke: white; fill: steelblue; }
+      text-align: right;
+      padding: 3px; margin: 1px; }
 </style>
 
 <pre>

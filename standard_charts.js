@@ -212,7 +212,9 @@ function pieChart() {
   return chart;
 } // function pieChart
 
+/* identity function */
 function I(d) { return d; }
+
 function add_bar_chart(divid,data,width,height) {
     divid=munge_selector(divid,"#barchart0");
     rows  = get_rows(data);
@@ -222,7 +224,7 @@ function add_bar_chart(divid,data,width,height) {
     height = default_number(height, 15.0*Math.pow(data[0].length,0.8));
     var xMax = d3.max(rows, xValue);
     var xMin = d3.min(rows, xValue);
-    var xScale = d3.scale.linear().domain([xMin, xMax]).range( [0, 500]); //width-margin]);
+    var xScale = d3.scale.linear().domain([xMin, xMax]).range( [0, width-margin]);
     var yScale = d3.scale.linear().domain([0, d3.max(data[1])])
                                   .range( [0, (height-margin)/data[0].length]);
 
@@ -610,6 +612,12 @@ function add_pie_chart(divid, wedges, r, title, css_class, highlight_color, x, y
     xy = get_columns(x,y); x=xy[0]; y=xy[1];
     
     var N = wedges.length
+    
+    // truncate the wedges to the last nonnull object
+    for (var i=0;i<N;i++)
+        if (typeof(wedges[i]) === "undefined" || typeof(wedges[i]) === null)
+            N=i
+
     // mouseover highlight fill color
     if (typeof(highlight_color) === "undefined") {
         highlight_color = "rgb(210,226,105)";     } 
@@ -625,24 +633,39 @@ function add_pie_chart(divid, wedges, r, title, css_class, highlight_color, x, y
         .attr("height", r*2.0+0.5)
         .attr("class", css_class) // give the svg drawing a class ("pieplate") so we can style things outside the circle (title, labels)
         .attr("id", title_name ) // give this particular pie chart ("pieplate") an ID based on its unique Title
-        .data([wedges])    // associate the svg object with the array of wedge values!
+         // data() is a list of lists. in our case its a data()[0][1] is the data for the second wedge
+        .data([wedges])    // associate the svg object with the array of wedge values! 
         .append("svg:g")      // make a group to contain just the piechart (stuff inside the circle)
         .attr("transform", "translate(" + r + "," + r + ")"); // move the center of the pie to the center of the "pieplate", the svg rectangle
 
     if (x && y) {
          svg = svg.attr("style","position: absolute; left:"+(x||"0px")+"; top:"+(y||"0px")+";"); }
-
+    
     svg.append("svg:title")
        .text(title)
-       
+    
+    // console.log(svg.data.length) // 2 (function that takes 2 arguments?)
+    
+    //var dat = svg.data()
+    //console.log(dat[0].length)  // 15
+    
     // create svg <path> generator (yields path points) with a default innerRadius-, outerRadius-, startAngle- & endAngle-accessor functions
-    var arc = d3.svg.arc().outerRadius(r);
+    //var arc = d3.svg.arc().outerRadius(r);
 
     // create arc data for us given a list of values
     // unfortunately this cleans the data so the href and tooltip text tags aren't bound to the SVG path objects below
     var pie = d3.layout.pie().value(
                   // function to access value of each data element
-                  function(d) { return d.value; }); 
+                  function(d) { /*console.log(d);*/ return d.value; }); 
+    
+    
+    // console.log(pie.length) // 2
+    
+    // allow variable-sized wedges of the pie
+    if (N && 'r' in wedges[0])
+        var arc = d3.svg.arc().outerRadius( function(d, i) { /* console.log(d); */ return (r<N && r in wedges[i%N]) ? wedges[i%N].r : r; } );
+    else
+        var arc = d3.svg.arc().outerRadius( r );
 
     // arcs is the group containing all the wedges
     var arcs = svg.selectAll("g.piewedge") // select all <g> elements with class "piewedge" (aren't any yet)
@@ -843,11 +866,11 @@ function add_pie_chart_list(divid,charts,piesizes, num_big_wedges,hot,cool,indep
             if (chart.values[j]>0) {
                 wedges[j] = { "label":   chart.labels[j], 
                               "value":   chart.values[j], 
-                              "href":    "/report/"+chart.ids[j],
+                              "href":    chart.href[j],
                               "tooltip":     chart.values[j]+" beds in "+chart.names[j],
                               "css_class"  : "", // "piewedge"
                               "css_id"     : divid_name+'-'+title_name+"-piewedge-"+j,  // each chart can be positioned using CSS, opacity is also by CSS
-                              "r"          : chart.r, //j<num_big_wedges ? chart.r : chart.r*1.35,
+                              "r"          : ('r' in chart) ? chart.r : piesizes[i], //j<num_big_wedges ? chart.r : chart.r*1.35,
                               "color"      : j<num_big_wedges ? hot[j%hot.length] : cool[j%cool.length],
                               "highlight_color": "rgb(210,226,105)",
                              }; 
