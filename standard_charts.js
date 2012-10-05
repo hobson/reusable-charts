@@ -215,15 +215,7 @@ function pieChart() {
 /* identity function */
 function I(d) { return d; }
 
-// sum the rows of a 2-D array
-function sum_rows(d) {
-    tot = [];
-    for  (var i=0;i<d.length;i++) 
-        tot.push(d3.sum(d[i]));
-    return tot;
-    } 
-
-function add_bar_chart(divid,data,divclass,width,height) {
+function add_bar_chart(divid,data,width,height) {
     divid=munge_selector(divid,"#barchart0");
     rows  = get_rows(data);
     //cols  = get_columns(data);
@@ -232,17 +224,15 @@ function add_bar_chart(divid,data,divclass,width,height) {
     height = default_number(height, 15.0*Math.pow(data[0].length,0.8));
     var xMax = d3.max(rows, xValue);
     var xMin = d3.min(rows, xValue);
-    var xScale = d3.scale.linear().domain([0, xMax]).range( [0, width-margin]);
+    var xScale = d3.scale.linear().domain([xMin, xMax]).range( [0, width-margin]);
     var yScale = d3.scale.linear().domain([0, d3.max(data[1])])
                                   .range( [0, (height-margin)/data[0].length]);
 
-    d3.select(divid).append("div")
-        .attr("class", "bar_chart")
+    d3.select(".content").append("div")
+        .attr("class", "barchart")
       .selectAll("div")
         .data(rows)
-      .enter().append("div").attr("class","bar_wrapper").attr("id",function(d,i) { return "bar-"+(1+i) })
-      //.append("div").attr("class","bar_graphics")
-      .append("div").attr("class","bar_bg")
+      .enter().append("div")
         .style("width", function(d) { return (xScale(d[0]) + "px"); })
         //.style("width", function(d) { return d[0] * 10 + "px"; })
         .text(function(d) { return d; });
