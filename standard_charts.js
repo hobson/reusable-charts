@@ -41,8 +41,8 @@ function get_columns(x,y) {
     return [x,y]; }
     
 // Return an array of a pair of arrays, even if the input (x and y) contained a list of pairs
-// in x or pair of arrays in x alone, or two separate arrays in x and y.
-function get_rows(x) {
+// in x alone or pair of arrays in x, or two separate arrays in x and y.
+function get_2_rows(x) {
     var dat = [];
     if (typeof(x) != "undefined") {
         if (x.length>1 && x[0].length===2) 
@@ -53,6 +53,41 @@ function get_rows(x) {
         } // if not undefined 
     return dat; 
     }
+
+// Return an array of arrays such that the matrix is at least as wide as it is tall
+function get_rows(array) {
+    var rows = [[]];
+    if (typeof(array) != "undefined") {
+        if (array.length>0) {
+            if (array[0].length>=array.length) 
+                return array;
+            for (var i=0;i<array.length; i++) {
+                //console.log(i+"="+array[i].length)
+                if (typeof(array[i])==='object') {
+                    for (var j=0;j<array[i].length; j++) {
+                        //console.log(i+","+j);
+                        if (j>=rows.length)
+                            rows.push([]);
+                        rows[j].push(array[i][j]); } } 
+                else {
+                    rows[0].push(+array[i]);  }
+                } // for i in array.length
+            } // if array.length
+        } // if not undefined 
+    return rows; 
+    }
+var make_wide = get_rows;
+    
+/* identity function */
+function I(d) { return d; }
+
+/* sum the rows of a 2-D array */
+function sum_rows(d) {
+    tot = [];
+    for  (var i=0;i<d.length;i++) 
+        tot.push(d3.sum(d[i]));
+    return tot;
+    } 
 
 function xValue(d) { return d[0]; }
 function yValue(d) { return d[1]; }
@@ -212,20 +247,10 @@ function pieChart() {
   return chart;
 } // function pieChart
 
-/* identity function */
-function I(d) { return d; }
-
-// sum the rows of a 2-D array
-function sum_rows(d) {
-    tot = [];
-    for  (var i=0;i<d.length;i++) 
-        tot.push(d3.sum(d[i]));
-    return tot;
-    } 
 
 function add_bar_chart(divid,data,divclass,width,height) {
     divid=munge_selector(divid,"#barchart0");
-    rows  = get_rows(data);
+    rows  = get_2_rows(data);
     //cols  = get_columns(data);
     width  = default_number(width,  400);
     margin = 4;
@@ -548,15 +573,9 @@ function scatterChart() {
   return chart;
 } // function timeSeriesChart
 
-
-
-
 function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
     divid =munge_selector(divid,"#map");
     marker=default_string(marker,"diamond");
-    stroke=default_string(stroke,"#447");
-    fill  =default_string(fill,"#6773b7");
-    r     =default_number(r,5);
     height=default_number(height,610);
     width =default_number(width,920); 
     
@@ -566,6 +585,12 @@ function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
     xy = get_columns(x,y); x=xy[0]; y=xy[1];
 
     var N=Math.min(x.length,y.length)
+    if ((typeof stroke != 'object') || (stroke.length != N))
+        stroke=default_string(stroke,"#447");
+    if ((typeof fill != 'object') || (fill.length != N))
+        fill  =default_string(fill,"#6773b7");
+    if ((typeof r != 'object') || (r.length != N))
+        r     =default_number(r,5);
     var minX=Math.min.apply( null, x ); 
     var maxX=Math.max.apply( null, x );
     var minY=Math.min.apply( null, y );
@@ -611,8 +636,16 @@ function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
         .attr("width", width).attr("height", height);
     
     // add a large gray dot for each x,y coordinate computed
-    for (i = 0; i < N; i++) 
-        canvas = markfun(canvas,r,marginX+x[i],marginY+y[i],stroke,fill);
+    for (i = 0; i < N; i++) {
+        if (stroke.length === N)
+            strk = stroke[i];
+        else
+            strk = stroke;
+        if (fill.length === N)
+            fll = fill[i];
+        else
+            fll = fill;
+        canvas = markfun(canvas,r,marginX+x[i],marginY+y[i],strk,fll); }
     } // function add_geo_scatter
 
 
@@ -672,10 +705,10 @@ function add_pie_chart(divid, wedges, r, title, css_class, highlight_color, x, y
     // console.log(pie.length) // 2
     
     // allow variable-sized wedges of the pie
-    if (N && 'r' in wedges[0])
-        var arc = d3.svg.arc().outerRadius( function(d, i) { /* console.log(d); */ return (r<N && r in wedges[i%N]) ? wedges[i%N].r : r; } );
-    else
-        var arc = d3.svg.arc().outerRadius( r );
+    //if (N && 'r' in wedges[0])
+    //    var arc = d3.svg.arc().outerRadius( function(d, i) { /* console.log(d); */ return (r<N && r in wedges[i%N]) ? wedges[i%N].r : r; } );
+    //else
+    var arc = d3.svg.arc().outerRadius( r );
 
     // arcs is the group containing all the wedges
     var arcs = svg.selectAll("g.piewedge") // select all <g> elements with class "piewedge" (aren't any yet)
