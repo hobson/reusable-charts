@@ -54,6 +54,15 @@ function get_2_rows(x) {
     return dat; 
     }
 
+// add an s to the end if count >=1
+function pluralize_count(count,singular) {
+    if (count==1)
+        return count+" "+singular;
+    if (!(count))
+        return "no "+singular+"s"; // TODO: or "none"
+    return count+" "+singular+"s";
+    }
+    
 // Return an array of arrays such that the matrix is at least as wide as it is tall
 function get_rows(array) {
     var rows = [[]];
@@ -116,6 +125,31 @@ function default_string(arg,default_value) {
         if (typeof(default_value) != "undefined") arg = ""+default_value;
         else arg = "";
     return ""+arg; }
+
+function chart_total(charts, href) {
+    var titles = [], member_sums = [], lengths = [];
+    for (c in charts) {
+        titles.push(c.title);
+        member_sums.push(Math.sum(c.values));
+        lengths.push(c.values.length); }
+    total_value = Math.sum(values);
+    percents  = [];
+    for (val in values) {
+        if (val>0.08*total_value)
+            percents.push(''+Math.round(100*val/total_value)+'%');
+        else 
+            percents.push('');
+        }
+    chart = {'title': "Combined Total",
+             'names': titles,
+             'ids':   titles,
+             'href':  href,
+             'member_sums': member_sums,
+             'member_values': member_sums,
+             'values': lengths, // values in chart_total are the numbers of values in sub-charts
+             'labels': percents }
+    return chart;
+    } // function chart_total
 
 function draw_circle(canvas,r,cx,cy,stroke,fill) {
     canvas.append("circle")
@@ -657,9 +691,10 @@ function add_pie_chart(divid, wedges, r, title, css_class, highlight_color, x, y
     var N = wedges.length
     
     // truncate the wedges to the last nonnull object
-    for (var i=0;i<N;i++)
-        if (typeof(wedges[i]) === "undefined" || typeof(wedges[i]) === null)
-            N=i
+    for (var i=0;i<N;i++) {
+        if (typeof(wedges[i]) === "undefined" || typeof(wedges[i]) === null) {
+            //console.log('cutoff at '+i)
+            N=i } }
 
     // mouseover highlight fill color
     if (typeof(highlight_color) === "undefined") {
