@@ -112,16 +112,16 @@ function munge_selector(divid,defaultid) {
 
 // set a default value for a numerical function argument if it isn't supplied (or undefined)
 // FIXME: check that the arg and the default are strings and coerce
-function default_number(arg,default_value) {
-    if (typeof(arg) === "undefined")
-        if (typeof(default_value) != "undefined") arg = +default_value;
+function default_number(arg,default_value) { 
+    if ((arg == undefined) || (arg == null)) // TODO: NaN
+        if (typeof(default_value) != "undefined") arg =   +default_value;
         else arg = 0;
     return +arg; }
 
 // set a default value for a string function argument if it isn't supplied (or undefined)
 // FIXME: check that the arg and the default are strings and coerce
 function default_string(arg,default_value) {
-    if (typeof(arg) === "undefined")
+    if ((arg == undefined) || (arg == null) )  // TODO: NaN
         if (typeof(default_value) != "undefined") arg = ""+default_value;
         else arg = "";
     return ""+arg; }
@@ -607,7 +607,7 @@ function scatterChart() {
   return chart;
 } // function timeSeriesChart
 
-function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
+function add_geo_scatter_chart(divid,lon,lat,marker,r,height,width,stroke,fill,x_range,y_range) {
     divid =munge_selector(divid,"#map");
     marker=default_string(marker,"diamond");
     height=default_number(height,610);
@@ -616,42 +616,63 @@ function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
     if (marker[0] === "d" || marker[0] === "D" ) markfun=draw_diamond;
     else markfun = draw_circle;
 
-    xy = get_columns(x,y); x=xy[0]; y=xy[1];
-
-    var N=Math.min(x.length,y.length)
-    if ((typeof stroke != 'object') || (stroke.length != N))
+    var xy = get_columns(lon,lat); 
+    var lon2=xy[0]; 
+    var lat2=xy[1];
+    var N=Math.min(lon2.length,lat2.length)
+    if ((stroke == null) || (typeof stroke != 'object') || (stroke.length != N))
         stroke=default_string(stroke,"#447");
-    if ((typeof fill != 'object') || (fill.length != N))
-        fill  =default_string(fill,"#6773b7");
-    if ((typeof r != 'object') || (r.length != N))
+    if ((fill == null)   || (typeof fill != 'object') || (fill.length != N))
+        fill  =default_string(fill,"#67C");
+    if ((r == null) || (typeof r != 'object') || (r.length != N))
         r     =default_number(r,5);
-    var minX=Math.min.apply( null, x ); 
-    var maxX=Math.max.apply( null, x );
-    var minY=Math.min.apply( null, y );
-    var maxY=Math.max.apply( null, y );
+    
+    //console.log(x_range+","+y_range)
+    // TODO: DRY this
+    if (((x_range != null) && (x_range != undefined) && (typeof x_range == 'object')) && (x_range.length == 2)) {
+        var minX=x_range[0]; //Math.min.apply( null, x_range ); 
+        var maxX=x_range[1]; //Math.max.apply( null, x_range ); 
+        }
+    else {
+        var minX=Math.min.apply( null, lon2 ); 
+        var maxX=Math.max.apply( null, lon2 );
+        }
+    if (((y_range != null) && (y_range != undefined) && (typeof y_range == 'object')) && (y_range.length == 2)) {
+        var minY=y_range[0]; //Math.min.apply( null, y_range ); 
+        var maxY=y_range[1]; //Math.max.apply( null, y_range ); 
+        }
+    else {
+        var minY=Math.min.apply( null, lat2 ); 
+        var maxY=Math.max.apply( null, lat2 );
+        }
     var Cx = (maxX+minX)*0.5 // map horizontal (east-west) center in degrees
     var Cy = (maxY+minY)*0.5 // map horizontal (east-west) center in degrees
     var Cx_rad = deg2rad(Cx);
     var Cy_rad = deg2rad(Cy);
-    
+    //console.log(minY+","+maxY)
     // convert to linear distance in meters relative to center/origin, with down positive and right positive
-    for (i = 0; i < N; i++) { 
-        x[i] = deg2rad(x[i]-Cx)*radlon2m(Cy_rad);
-        y[i] = deg2rad(Cy-y[i])*radlat2m(Cy_rad);  // Cy unnecessary
+    
+    var x = [];
+    var y = [];
+    
+    for (var i = 0; i < N; i++) { 
+        x.push(deg2rad(lon2[i]-Cx)*radlon2m(Cy_rad));
+        y.push(deg2rad(Cy-lat2[i])*radlat2m(Cy_rad));  // Cy unnecessary
+        //console.log(i+"/"+N+":"+x+","+y)
     }
     // Distance calcs assume spherical earth, which means ~.1% inacuracy for all calcs
-    
-    var marginX = 40,  marginY = 30;  // size of clear margin around perimeter of map canvas
+    var marginX = width*0.045,  marginY = height*0.035;  // size of clear margin around perimeter of map canvas
 
     // data bounds in meters relative to center
-    var minX_m=Math.min.apply( null, x ); 
-    var maxX_m=Math.max.apply( null, x );
-    var minY_m=Math.min.apply( null, y );
-    var maxY_m=Math.max.apply( null, y ); 
+    var minX_m=deg2rad(minX-Cx)*radlon2m(Cy_rad); 
+    var maxX_m=deg2rad(maxX-Cx)*radlon2m(Cy_rad); 
+    var minY_m=deg2rad(minY-Cy)*radlon2m(Cy_rad); 
+    var maxY_m=deg2rad(maxY-Cy)*radlon2m(Cy_rad); 
 
     var sfX =(width-2*marginX)/(maxX_m-minX_m);
     var sfY =(height-2*marginY)/(maxY_m-minY_m); 
-    // maintain orthographic scale (don't stretch to fit canvas)
+    // maintain proportion, or orthographic scale 
+    //  (don't stretch one axis or another to fit the canvas)
     sfX = Math.min(sfX,sfY); sfY=sfX;
     function Xscale(value,i,values) {
         return (value-minX_m)*sfX; }
@@ -666,11 +687,16 @@ function add_geo_scatter_chart(divid,x,y,marker,r,height,width,stroke,fill) {
     y = y.map(Yscale) 
 
     // create a canvas to draw an SVG drawing on
+    if ((width<1) && (height<1)) {
+        width = Math.round(width*1000.0)/10.0+"%"
+        width = Math.round(width*1000.0)/10.0+"%" } // but marginX and marginY are still broken
+        
     var canvas = d3.select(divid).append("svg")
         .attr("width", width).attr("height", height);
     
-    // add a large gray dot for each x,y coordinate computed
-    for (i = 0; i < N; i++) {
+
+    // add a circle or diamond for each x,y coordinate computed
+    for (var i = 0; i < N; i++) {
         if (stroke.length === N)
             strk = stroke[i];
         else
@@ -958,7 +984,7 @@ function add_pie_chart_list(divid,charts,piesizes, num_big_wedges,hot,cool,indep
                     wedges[j]["color"] = cool[j%cool.length]; }
                 } // if chart.values>0
             } // for each wedge
-            add_pie_chart(divid,wedges, r, chart.title, "pieplate");
+            add_pie_chart(divid, wedges, r, chart.title, "pieplate");
         } // for each chart
     } // function add_pie_chart_list
 
@@ -987,13 +1013,13 @@ function add_scattered_packed_bubbles(divid,x,y,marker,r,height,width,stroke,fil
     var Cy_rad = deg2rad(Cy);
     
     // convert to linear distance in meters relative to center/origin, with down positive and right positive
-    for (i = 0; i < N; i++) { 
+    for (var i = 0; i < N; i++) { 
         x[i] = deg2rad(x[i]-Cx)*radlon2m(Cy_rad);
         y[i] = deg2rad(Cy-y[i])*radlat2m(Cy_rad);  // Cy unnecessary
     }
     // Distance calcs assume spherical earth, which means ~.1% inacuracy for all calcs
     
-    var marginX = 40,  marginY = 30;  // size of clear margin around perimeter of map canvas
+    var marginX = 0.03*width,  marginY = 0.03*height;  // size of clear margin around perimeter of map canvas
 
     // data bounds in meters relative to center
     var minX_m=Math.min.apply( null, x ); 
@@ -1030,7 +1056,7 @@ function add_scattered_packed_bubbles(divid,x,y,marker,r,height,width,stroke,fil
         .attr("width", width).attr("height", height);
     
     // add a large gray dot for each x,y coordinate computed
-    for (i = 0; i < N; i++) 
+    for (var i = 0; i < N; i++) 
         canvas = markfun(canvas,r,marginX+x[i],marginY+y[i],stroke,fill);
     } // function add_geo_scatter
 
