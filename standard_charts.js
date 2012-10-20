@@ -113,7 +113,8 @@ function munge_selector(divid,defaultid) {
 // set a default value for a numerical function argument if it isn't supplied (or undefined)
 // FIXME: check that the arg and the default are strings and coerce
 function default_number(arg,default_value) { 
-    if ((arg == undefined) || (arg == null)) // TODO: NaN
+    if (arg == null) return null;
+    if (arg == undefined) // TODO: NaN
         if (typeof(default_value) != "undefined") arg =   +default_value;
         else arg = 0;
     return +arg; }
@@ -121,6 +122,7 @@ function default_number(arg,default_value) {
 // set a default value for a string function argument if it isn't supplied (or undefined)
 // FIXME: check that the arg and the default are strings and coerce
 function default_string(arg,default_value) {
+    //FIXME: treat null, NaN , undefined seperately, e.g. `if (arg == null) return null;`
     if ((arg == undefined) || (arg == null) )  // TODO: NaN
         if (typeof(default_value) != "undefined") arg = ""+default_value;
         else arg = "";
@@ -709,113 +711,6 @@ function add_geo_scatter_chart(divid,lon,lat,marker,r,height,width,stroke,fill,x
     } // function add_geo_scatter
 
 
-// non-closured function
-function add_pie_chart(divid, wedges, r, title, css_class, highlight_color, x, y) {
-    divid = munge_selector(divid, "#piemap");
-    xy = get_columns(x,y); x=xy[0]; y=xy[1];
-    
-    var N = wedges.length
-    
-    // truncate the wedges to the last nonnull object
-    for (var i=0;i<N;i++) {
-        if (typeof(wedges[i]) === "undefined" || typeof(wedges[i]) === null) {
-            //console.log('cutoff at '+i)
-            N=i } }
-
-    // mouseover highlight fill color
-    if (typeof(highlight_color) === "undefined") {
-        highlight_color = "rgb(210,226,105)";     } 
-    var css_class = css_class || "pieplate";
-    
-    // set up an SVG object within the specified <div>
-    var title_name = title.replace(/\s/g, "");
-
-    var canvas = d3.select(divid); // select the parent that may already contain multiple chilren (SVG charts)
-
-    var svg = canvas.append("svg:svg") // create a new SVG element for drawing inside (child of) the parent <div id=divid>
-        .attr("width",  r*2.0+0.5) //set width and height of the canvas (attributes of <svg> tag)
-        .attr("height", r*2.0+0.5)
-        .attr("class", css_class) // give the svg drawing a class ("pieplate") so we can style things outside the circle (title, labels)
-        .attr("id", title_name ) // give this particular pie chart ("pieplate") an ID based on its unique Title
-         // data() is a list of lists. in our case its a data()[0][1] is the data for the second wedge
-        .data([wedges])    // associate the svg object with the array of wedge values! 
-        .append("svg:g")      // make a group to contain just the piechart (stuff inside the circle)
-        .attr("transform", "translate(" + r + "," + r + ")"); // move the center of the pie to the center of the "pieplate", the svg rectangle
-
-    if (x && y) {
-         svg = svg.attr("style","position: absolute; left:"+(x||"0px")+"; top:"+(y||"0px")+";"); }
-    
-    svg.append("svg:title")
-       .text(title)
-    
-    // console.log(svg.data.length) // 2 (function that takes 2 arguments?)
-    
-    //var dat = svg.data()
-    //console.log(dat[0].length)  // 15
-    
-    // create svg <path> generator (yields path points) with a default innerRadius-, outerRadius-, startAngle- & endAngle-accessor functions
-    //var arc = d3.svg.arc().outerRadius(r);
-
-    // create arc data for us given a list of values
-    // unfortunately this cleans the data so the href and tooltip text tags aren't bound to the SVG path objects below
-    var pie = d3.layout.pie().value(
-                  // function to access value of each data element
-                  function(d) { /*console.log(d);*/ return d.value; }); 
-    
-    
-    // console.log(pie.length) // 2
-    
-    // allow variable-sized wedges of the pie
-    //if (N && 'r' in wedges[0])
-    //    var arc = d3.svg.arc().outerRadius( function(d, i) { /* console.log(d); */ return (r<N && r in wedges[i%N]) ? wedges[i%N].r : r; } );
-    //else
-    var arc = d3.svg.arc().outerRadius( r );
-
-    // arcs is the group containing all the wedges
-    var arcs = svg.selectAll("g.piewedge") // select all <g> elements with class "piewedge" (aren't any yet)
-        .data(pie) // associate the pie data (array of arcs with startAngle, endAngle, and value)
-        .enter()   // create a <g> for every object in the data (pie, which contains arcs)
-        .append("svg:g") // create group for each slice (<path>, <text>)
-        .attr("id", function(d,i) { return wedges[i%N].css_id || "piewedge"+i;} )
-        .attr("class", function(d,i) { return "piewedge "+wedges[i%N].css_class;} ); // give the group (slice) a class ("slice") so we can style things (like labels)
-
-    // each call to color pushes values to its domain and range
-    arcs.append("svg:path")
-        .attr("fill", function(d, i) { return wedges[i%N].color; }) //set pie slice color
-        .attr("d", arc) // create SVG path using d3.arc() and .data ("pie" object above)
-        .on('mouseover', function(d,i) { 
-             d3.select(this) // local "this" and not global?
-                .style('fill',highlight_color); }) // TODO: change or add a class rather than explitly changing the fill color (so CSS can control the color)
-        .on('mouseout', function(d,i) { 
-             d3.select(this)
-               .style('fill', wedges[i%N].color ); })
-        .on('mouseup', function(d,i) {
-              window.location.href = wedges[i].href; });
-
-    arcs.append("svg:title")
-       .text(function(d,i) { return wedges[i].tooltip; });
-    
-    //arcs.attr("class",function(d,i) { return "q"+i+"-9"; }) // Color Brewer labeling convention
-    
-    // to get really sexy, need to align the label between the edges of the wedge where the centerline of the text (or bounding box) leaves the wedge
-    arcs.append("svg:text") //add a label to each slice
-        .attr("transform", function(d) { // transform will move the text's origin (to the centroid of the arc)
-                    // arc geometry setup for arc.centroid calc
-                    d.innerRadius = 0;
-                    d.outerRadius = chart.r;
-                    ac = arc.centroid(d);
-                    // move text down 5 pixels (to align text middle rather than bottom, if browser doesn't honor SVG vertical-align)
-                    //ac[1] = ac[1]+5;  // "0.5ex"?
-                    // move out away from origin 35% (where there's more room for text)
-                    ac[0] = ac[0]*1.35; 
-                    ac[1] = ac[1]*1.35; 
-                    return "translate(" + ac + ")"; })//this gives us a pair of coordinates like [50, 50]
-        .attr("dominant-baseline", "middle") // firefox+chrome -- http://stackoverflow.com/a/73257/623735 uses "hanging" , "central" are other options
-        .attr("vertical-align", "middle") // nonMozilla browsers -- see dominant-baseline, 50% is an option here
-        .attr("text-align", "middle") // nobody uses this -- https://groups.google.com/forum/?fromgroups=#!topic/mozilla.dev.tech.svg/G-DFbPv7MFM
-        .attr("text-anchor", "middle") //center the text on it's origin
-        .text(function(d, i) { return wedges[i].label; } ); //get the label from our original data array
-    } // function add_pie_chart()
 
 function json_or_object(data,default_value) {
     var typ = typeof data;
@@ -952,14 +847,126 @@ function default_list(arg,default_value) {
         else arg = [];
     return arg; }
 
-function add_pie_chart_list(divid,charts,piesizes, num_big_wedges,hot,cool,independent) {
+// non-closured function
+function add_pie_chart(divid, wedges, r, title, css_class, highlight_color, x, y, wedge_sort) {
+    divid = munge_selector(divid, "#piemap");
+    wedge_sort  =    default_number(wedge_sort,-1);
+    
+    var N = wedges.length
+    
+    // truncate the wedges to the last nonnull object
+    for (var i=0;i<N;i++) {
+        if (typeof(wedges[i]) === "undefined" || typeof(wedges[i]) === null) {
+            //console.log('cutoff at '+i)
+            N=i } }
+
+    // mouseover highlight fill color
+    if (typeof(highlight_color) === "undefined") {
+        highlight_color = "rgb(210,226,105)";     } 
+    var css_class = css_class || "pieplate";
+    
+    // set up an SVG object within the specified <div>
+    var title_name = title.replace(/\s/g, "");
+
+    var canvas = d3.select(divid); // select the parent that may already contain multiple chilren (SVG charts)
+
+    var svg = canvas.append("svg:svg") // create a new SVG element for drawing inside (child of) the parent <div id=divid>
+        .attr("width",  r*2.0+0.5) //set width and height of the canvas (attributes of <svg> tag)
+        .attr("height", r*2.0+0.5)
+        .attr("class", css_class) // give the svg drawing a class ("pieplate") so we can style things outside the circle (title, labels)
+        .attr("id", title_name ) // give this particular pie chart ("pieplate") an ID based on its unique Title
+         // data() is a list of lists. in our case its a data()[0][1] is the data for the second wedge
+        .data([wedges])    // associate the svg object with the array of wedge values! 
+        .append("svg:g")      // make a group to contain just the piechart (stuff inside the circle)
+        .attr("transform", "translate(" + r + "," + r + ")"); // move the center of the pie to the center of the "pieplate", the svg rectangle
+
+    if (x && y) {
+         svg = svg.attr("style","position: absolute; left:"+(x||"0px")+"; top:"+(y||"0px")+";"); }
+    
+    svg.append("svg:title")
+       .text(title)
+    
+    // console.log(svg.data.length) // 2 (function that takes 2 arguments?)
+    
+    //var dat = svg.data()
+    //console.log(dat[0].length)  // 15
+    
+    // create svg <path> generator (yields path points) with a default innerRadius-, outerRadius-, startAngle- & endAngle-accessor functions
+    //var arc = d3.svg.arc().outerRadius(r);
+
+    // create arc data for us given a list of values
+    // unfortunately this cleans the data so the href and tooltip text tags aren't bound to the SVG path objects below
+    var pie = d3.layout.pie().value(
+                  // function to access value of each data element
+                  function(d) { /*console.log(d);*/ return d.value; }); 
+    
+    if ((wedge_sort==null) || (wedge_sort == 0))
+        pie = pie.sort(null) 
+    
+    // console.log(pie.length) // 2
+    
+    // allow variable-sized wedges of the pie
+    //if (N && 'r' in wedges[0])
+    //    var arc = d3.svg.arc().outerRadius( function(d, i) { /* console.log(d); */ return (r<N && r in wedges[i%N]) ? wedges[i%N].r : r; } );
+    //else
+    var arc = d3.svg.arc().outerRadius( r );
+
+    // arcs is the group containing all the wedges
+    var arcs = svg.selectAll("g.piewedge") // select all <g> elements with class "piewedge" (aren't any yet)
+        .data(pie) // associate the pie data (array of arcs with startAngle, endAngle, and value)
+        .enter()   // create a <g> for every object in the data (pie, which contains arcs)
+        .append("svg:g") // create group for each slice (<path>, <text>)
+        .attr("id", function(d,i) { return wedges[i%N].css_id || "piewedge"+i;} )
+        .attr("class", function(d,i) { return "piewedge "+wedges[i%N].css_class;} ); // give the group (slice) a class ("slice") so we can style things (like labels)
+
+    // each call to color pushes values to its domain and range
+    arcs.append("svg:path")
+        .attr("fill", function(d, i) { return wedges[i%N].color; }) //set pie slice color
+        .attr("d", arc) // create SVG path using d3.arc() and .data ("pie" object above)
+        .on('mouseover', function(d,i) { 
+             d3.select(this) // local "this" and not global?
+                .style('fill',highlight_color); }) // TODO: change or add a class rather than explitly changing the fill color (so CSS can control the color)
+        .on('mouseout', function(d,i) { 
+             d3.select(this)
+               .style('fill', wedges[i%N].color ); })
+        .on('mouseup', function(d,i) {
+              window.location.href = wedges[i].href; });
+
+    arcs.append("svg:title")
+       .text(function(d,i) { return wedges[i].tooltip; });
+    
+    //arcs.attr("class",function(d,i) { return "q"+i+"-9"; }) // Color Brewer labeling convention
+    
+    // to get really sexy, need to align the label between the edges of the wedge where the centerline of the text (or bounding box) leaves the wedge
+    arcs.append("svg:text") //add a label to each slice
+        .attr("transform", function(d) { // transform will move the text's origin (to the centroid of the arc)
+                    // arc geometry setup for arc.centroid calc
+                    d.innerRadius = 0;
+                    d.outerRadius = chart.r;
+                    ac = arc.centroid(d);
+                    // move text down 5 pixels (to align text middle rather than bottom, if browser doesn't honor SVG vertical-align)
+                    //ac[1] = ac[1]+5;  // "0.5ex"?
+                    // move out away from origin 35% (where there's more room for text)
+                    ac[0] = ac[0]*1.35; 
+                    ac[1] = ac[1]*1.35; 
+                    return "translate(" + ac + ")"; })//this gives us a pair of coordinates like [50, 50]
+        .attr("dominant-baseline", "middle") // firefox+chrome -- http://stackoverflow.com/a/73257/623735 uses "hanging" , "central" are other options
+        .attr("vertical-align", "middle") // nonMozilla browsers -- see dominant-baseline, 50% is an option here
+        .attr("text-align", "middle") // nobody uses this -- https://groups.google.com/forum/?fromgroups=#!topic/mozilla.dev.tech.svg/G-DFbPv7MFM
+        .attr("text-anchor", "middle") //center the text on it's origin
+        .text(function(d, i) { return wedges[i].label; } ); //get the label from our original data array
+    } // function add_pie_chart()
+
+
+function add_pie_chart_list(divid,charts,piesizes, num_big_wedges,hot,cool,independent,wedge_sort) {
     divid =          munge_selector(divid,"#piemap");
     divid_name =     divid.replace('#','');
     piesizes =       default_number_list(piesizes,[50, 50, 50, 50, 50, 50, 100]);
     num_big_wedges = default_number(num_big_wedges,2);
-    hot   =          default_list(hot, ['#C71','#B41','#C62', '#930','#E74']);  
-    independent =    default_list(independent,['#CCC']);
-    cool =           default_list(cool, ['#999','#888','#666','#888','#999','#666']);// ['#9ecae1','#c6dbef'];
+    hot   =          default_list(hot, ['#C71','#B41','#C62', '#930','#E74']); 
+    cool =           default_list(cool, ['#999','#888','#666','#888','#999','#666']);// ['#9ecae1','#c6dbef']; 
+    independent =    default_list(independent,['#CCC']); 
+    wedge_sort  =    default_number(wedge_sort,-1);
     for (var i=0; i<Math.min(charts.length,piesizes.length); i++) {
         chart = charts[i];
         var wedges = [];
@@ -991,11 +998,11 @@ function add_pie_chart_list(divid,charts,piesizes, num_big_wedges,hot,cool,indep
 function add_scattered_packed_bubbles(divid,x,y,marker,r,height,width,stroke,fill) {
     divid =munge_selector(divid,"#map");
     marker=default_string(marker,"diamond");
-    stroke=default_string(stroke,"#447");
-    fill  =default_string(fill,"#6773b7");
     r     =default_number(r,5);
     height=default_number(height,610);
     width =default_number(width,920); 
+    stroke=default_string(stroke,"#447");
+    fill  =default_string(fill,"#6773b7");
     
     if (marker[0] === "d" || marker[0] === "D" ) markfun=draw_diamond;
     else markfun = draw_circle;
